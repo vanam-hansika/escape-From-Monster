@@ -1,0 +1,179 @@
+extends CharacterBody3D
+
+@export var walk_speed: float = 3.0
+@export var sprint_speed: float = 5.5
+@export var mouse_sensitivity: float = 0.002
+@export var bob_freq: float = 2.4
+@export var bob_amp: float = 0.08
+
+var t_bob: float = 0.0
+var gravity: float = 9.8
+
+@onready var head: Node3D = $CameraHead
+@onready var camera: Camera3D = $CameraHead/Camera3D
+@onready var hand_container: Node3D = $CameraHead/Camera3D/HandContainer
+@onready var stamina = $Stamina
+@onready var sanity = $Sanity
+@onready var flashlight = $CameraHead/Camera3D/HandContainer/WristRight/FistRight/FlashlightHandle/FlashlightHead/FlashlightSpotLight
+
+var is_sprinting: bool = false
+var speed: float = 3.0
+var sway_target_rot := Vector3.ZERO
+var can_move: bool = true
+
+var mobile_movement_vector: Vector2 = Vector2.ZERO
+var mobile_sprint_active: bool = false
+
+func _ready():
+	add_to_group("player")
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	
+	if has_node("CameraHead/Camera3D/HandContainer/WristLeft"):
+		$CameraHead/Camera3D/HandContainer/WristLeft.hide()
+		
+	if flashlight:
+		flashlight.shadow_bias = 0.15
+		flashlight.shadow_normal_bias = 2.5
+		
+	# Setup InputMap actions programmatically
+	var inputs = {
+		"move_forward": KEY_W,
+		"move_backward": KEY_S,
+		"move_left": KEY_A,
+		"move_right": KEY_D,
+		"sprint": KEY_SHIFT,
+		"toggle_flashlight": KEY_F,
+	}
+	
+	for action in inputs:
+		if not InputMap.has_action(action):
+			InputMap.add_action(action)
+			var event = InputEventKey.new()
+			event.physical_keycode = inputs[action]
+			InputMap.action_add_event(action, event)
+
+func _unhandled_input(event):
+	if not can_move:
+		return
+		
+	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		rotate_y(-event.relative.x * mouse_sensitivity)
+		head.rotate_x(-event.relative.y * mouse_sensitivity)
+		head.rotation.x = clamp(head.rotation.x, deg_to_rad(-80), deg_to_rad(80))
+		
+		# Hand sway target calculation (more noticeable and smooth)
+		sway_target_rot.y = clamp(-event.relative.x * 0.08, -0.4, 0.4)
+		sway_target_rot.x = clamp(-event.relative.y * 0.08, -0.4, 0.4)
+
+func _physics_process(delta):
+	if not can_move:
+		return
+
+	# Add gravity
+	if not is_on_floor():
+		velocity.y -= gravity * delta
+
+	# Handle Sprint
+	is_sprinting = (Input.is_physical_key_pressed(KEY_SHIFT) or mobile_sprint_active) and is_on_floor() and stamina.current_stamina > 2.0
+	
+	var input_dir = Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
+	if mobile_movement_vector != Vector2.ZERO:
+		input_dir = mobile_movement_vector
+		
+	var is_moving = input_dir.length() > 0.0
+	
+	if is_sprinting and is_moving:
+		speed = sprint_speed
+		stamina.consume_stamina(delta * 1.5) # Fast drain
+	elif is_moving:
+		speed = walk_speed
+		if not flashlight.is_on:
+			stamina.recover_stamina(delta * 0.5) # Recover stamina while walking in the dark!
+		else:
+			stamina.consume_stamina(delta * 0.3) # Slow drain while walking with light
+	else:
+		speed = walk_speed
+		if not flashlight.is_on:
+			stamina.recover_stamina(delta * 2.0) # Fast recover in the dark
+		else:
+			stamina.recover_stamina(delta) # Recover when standing still
+	
+	# Direction of movement
+	var direction = (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
+	
+	if direction:
+		velocity.x = direction.x * speed
+		velocity.z = direction.z * speed
+	else:
+		velocity.x = move_toward(velocity.x, 0, speed)
+		velocity.z = move_toward(velocity.z, 0, speed)
+
+	move_and_slide()
+	
+	# Camera Bobbing
+	t_bob += delta * velocity.length() * float(is_on_floor())
+	var bob_pos = _headbob(t_bob)
+	
+	# Shake effect based on sanity
+	var shake_offset = Vector3.ZERO
+	if sanity.current_sanity < 50.0:
+		var shake_intensity = (50.0 - sanity.current_sanity) / 50.0 * 0.04
+		shake_offset = Vector3(
+			randf_range(-shake_intensity, shake_intensity),
+			randf_range(-shake_intensity, shake_intensity),
+			randf_range(-shake_intensity, shake_intensity)
+		)
+		
+	camera.transform.origin = bob_pos + shake_offset
+	
+	# Hand Sway and Bobbing (highly noticeable and organic)
+	if hand_container:
+		hand_container.rotation.y = lerp(hand_container.rotation.y, sway_target_rot.y, delta * 4.0)
+		hand_container.rotation.x = lerp(hand_container.rotation.x, sway_target_rot.x, delta * 4.0)
+		sway_target_rot = lerp(sway_target_rot, Vector3.ZERO, delta * 4.0)
+		
+		# Hand bob position (scaled for walk vs sprint)
+		var target_hand_pos = Vector3(0.0, -0.05, 0.0)
+		if is_moving and is_on_floor():
+			var multiplier = 1.8 if is_sprinting else 1.0
+			target_hand_pos.y += sin(t_bob * 2.0) * 0.025 * multiplier
+			target_hand_pos.x += cos(t_bob) * 0.015 * multiplier
+		hand_container.position = lerp(hand_container.position, target_hand_pos, delta * 8.0)
+
+	# Handle Flashlight Switch
+	if Input.is_action_just_pressed("toggle_flashlight"):
+		flashlight.toggle()
+
+	# Monster proximity flickering
+	var monsters = get_tree().get_nodes_in_group("monster")
+	var is_monster_near = false
+	var intensity = 0.0
+	for m in monsters:
+		if "current_state" in m and m.current_state != "IDLE":
+			var dist = global_position.distance_to(m.global_position)
+			if dist < 16.0:
+				is_monster_near = true
+				intensity = max(intensity, 1.0 - (dist / 16.0))
+				
+	if is_monster_near and flashlight.is_on:
+		if randf() < intensity * 0.7:
+			flashlight.light_energy = randf_range(0.0, flashlight.default_energy * 0.3)
+		else:
+			flashlight.light_energy = lerp(flashlight.light_energy, flashlight.default_energy, delta * 20.0)
+	elif flashlight.is_on:
+		flashlight.light_energy = lerp(flashlight.light_energy, flashlight.default_energy, delta * 5.0)
+
+	# Sanity logic (darkness check)
+	var is_dark = not flashlight.is_on or flashlight.light_energy < flashlight.default_energy * 0.2
+	sanity.update_sanity(delta, is_dark)
+
+func _headbob(time) -> Vector3:
+	var pos = Vector3.ZERO
+	pos.y = sin(time * bob_freq) * bob_amp
+	pos.x = cos(time * bob_freq / 2.0) * bob_amp
+	return pos
+
+func disable_movement():
+	can_move = false
+	velocity = Vector3.ZERO
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE

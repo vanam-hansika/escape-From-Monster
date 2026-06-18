@@ -1,0 +1,83 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://monster.gd" id="1_monster"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
+radius = 0.5
+height = 2.2
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_torso"]
+radius = 0.4
+height = 1.8
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_body"]
+albedo_color = Color(0.06, 0.06, 0.08, 1)
+roughness = 0.9
+
+[sub_resource type="SphereMesh" id="SphereMesh_head"]
+radius = 0.35
+height = 0.7
+
+[sub_resource type="BoxMesh" id="BoxMesh_eye"]
+size = Vector3(0.08, 0.08, 0.08)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_eye"]
+albedo_color = Color(1, 0.1, 0.1, 1)
+emission_enabled = true
+emission = Color(1, 0, 0, 1)
+emission_energy_multiplier = 4.0
+
+[sub_resource type="BoxMesh" id="BoxMesh_arm"]
+size = Vector3(0.12, 1.2, 0.12)
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_detector"]
+radius = 0.65
+height = 2.3
+
+[node name="Monster" type="CharacterBody3D"]
+script = ExtResource("1_monster")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
+shape = SubResource("CapsuleShape3D_1")
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+target_desired_distance = 1.2
+path_max_distance = 3.0
+avoidance_enabled = true
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
+mesh = SubResource("CapsuleMesh_torso")
+material_override = SubResource("StandardMaterial3D_body")
+
+[node name="Head" type="MeshInstance3D" parent="MeshInstance3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
+mesh = SubResource("SphereMesh_head")
+material_override = SubResource("StandardMaterial3D_body")
+
+[node name="EyeLeft" type="MeshInstance3D" parent="MeshInstance3D/Head"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.15, 0.1, -0.28)
+mesh = SubResource("BoxMesh_eye")
+material_override = SubResource("StandardMaterial3D_eye")
+
+[node name="EyeRight" type="MeshInstance3D" parent="MeshInstance3D/Head"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.15, 0.1, -0.28)
+mesh = SubResource("BoxMesh_eye")
+material_override = SubResource("StandardMaterial3D_eye")
+
+[node name="ArmLeft" type="MeshInstance3D" parent="MeshInstance3D"]
+transform = Transform3D(0.965926, 0.258819, 0, -0.258819, 0.965926, 0, 0, 0, 1, -0.5, 0.1, 0)
+mesh = SubResource("BoxMesh_arm")
+material_override = SubResource("StandardMaterial3D_body")
+
+[node name="ArmRight" type="MeshInstance3D" parent="MeshInstance3D"]
+transform = Transform3D(0.965926, -0.258819, 0, 0.258819, 0.965926, 0, 0, 0, 1, 0.5, 0.1, 0)
+mesh = SubResource("BoxMesh_arm")
+material_override = SubResource("StandardMaterial3D_body")
+
+[node name="Area3D" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
+shape = SubResource("CapsuleShape3D_detector")

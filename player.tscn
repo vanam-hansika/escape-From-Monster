@@ -1,0 +1,114 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://player.gd" id="1_player"]
+[ext_resource type="Script" path="res://flashlight.gd" id="2_flashlight"]
+[ext_resource type="Script" path="res://stamina.gd" id="3_stamina"]
+[ext_resource type="Script" path="res://sanity.gd" id="4_sanity"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
+radius = 0.4
+height = 1.8
+
+[sub_resource type="BoxMesh" id="BoxMesh_wrist"]
+size = Vector3(0.06, 0.06, 0.25)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_skin"]
+albedo_color = Color(0.8, 0.6, 0.5, 1)
+roughness = 0.8
+
+[sub_resource type="SphereMesh" id="SphereMesh_fist"]
+radius = 0.04
+height = 0.08
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_handle"]
+top_radius = 0.018
+bottom_radius = 0.018
+height = 0.18
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_metal"]
+albedo_color = Color(0.15, 0.15, 0.15, 1)
+metallic = 0.8
+roughness = 0.4
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_head"]
+top_radius = 0.032
+bottom_radius = 0.025
+height = 0.06
+
+[sub_resource type="SphereMesh" id="SphereMesh_lens"]
+radius = 0.03
+height = 0.04
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_lens"]
+albedo_color = Color(1, 1, 0.5, 1)
+emission_enabled = true
+emission = Color(1, 1, 0.2, 1)
+emission_energy_multiplier = 5.0
+
+[node name="Player" type="CharacterBody3D"]
+script = ExtResource("1_player")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_1")
+
+[node name="CameraHead" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
+
+[node name="Camera3D" type="Camera3D" parent="CameraHead"]
+current = true
+fov = 75.0
+near = 0.05
+
+[node name="HandContainer" type="Node3D" parent="CameraHead/Camera3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+
+[node name="WristLeft" type="MeshInstance3D" parent="CameraHead/Camera3D/HandContainer"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.18, -0.12, -0.25)
+mesh = SubResource("BoxMesh_wrist")
+material_override = SubResource("StandardMaterial3D_skin")
+
+[node name="FistLeft" type="MeshInstance3D" parent="CameraHead/Camera3D/HandContainer/WristLeft"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.13)
+mesh = SubResource("SphereMesh_fist")
+material_override = SubResource("StandardMaterial3D_skin")
+
+[node name="WristRight" type="MeshInstance3D" parent="CameraHead/Camera3D/HandContainer"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.18, -0.12, -0.25)
+mesh = SubResource("BoxMesh_wrist")
+material_override = SubResource("StandardMaterial3D_skin")
+
+[node name="FistRight" type="MeshInstance3D" parent="CameraHead/Camera3D/HandContainer/WristRight"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.13)
+mesh = SubResource("SphereMesh_fist")
+material_override = SubResource("StandardMaterial3D_skin")
+
+[node name="FlashlightHandle" type="MeshInstance3D" parent="CameraHead/Camera3D/HandContainer/WristRight/FistRight"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0.05, -0.05)
+mesh = SubResource("CylinderMesh_handle")
+material_override = SubResource("StandardMaterial3D_metal")
+
+[node name="FlashlightHead" type="MeshInstance3D" parent="CameraHead/Camera3D/HandContainer/WristRight/FistRight/FlashlightHandle"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0)
+mesh = SubResource("CylinderMesh_head")
+material_override = SubResource("StandardMaterial3D_metal")
+
+[node name="FlashlightLens" type="MeshInstance3D" parent="CameraHead/Camera3D/HandContainer/WristRight/FistRight/FlashlightHandle/FlashlightHead"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.03, 0)
+mesh = SubResource("SphereMesh_lens")
+material_override = SubResource("StandardMaterial3D_lens")
+
+[node name="FlashlightSpotLight" type="SpotLight3D" parent="CameraHead/Camera3D/HandContainer/WristRight/FistRight/FlashlightHandle/FlashlightHead"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0.04, 0)
+light_color = Color(1, 0.98, 0.85, 1)
+light_energy = 8.0
+shadow_enabled = true
+spot_range = 35.0
+spot_angle = 38.0
+script = ExtResource("2_flashlight")
+
+[node name="Stamina" type="Node" parent="."]
+script = ExtResource("3_stamina")
+
+[node name="Sanity" type="Node" parent="."]
+script = ExtResource("4_sanity")
