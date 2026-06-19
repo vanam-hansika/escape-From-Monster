@@ -7,6 +7,7 @@ var player: CharacterBody3D
 var monster: CharacterBody3D
 
 var ambient_player: AudioStreamPlayer
+var safe_ambient_player: AudioStreamPlayer
 var wind_player: AudioStreamPlayer
 var heartbeat_player: AudioStreamPlayer
 var sfx_player: AudioStreamPlayer
@@ -24,6 +25,10 @@ func _ready():
 	ambient_player = AudioStreamPlayer.new()
 	ambient_player.name = "AmbientPlayer"
 	add_child(ambient_player)
+
+	safe_ambient_player = AudioStreamPlayer.new()
+	safe_ambient_player.name = "SafeAmbientPlayer"
+	add_child(safe_ambient_player)
 	
 	wind_player = AudioStreamPlayer.new()
 	wind_player.name = "WindPlayer"
@@ -87,11 +92,20 @@ func play_jumpscare():
 	sfx_player.play()
 
 var jumpscare_stream: AudioStreamWAV
+var door_open_stream: AudioStreamWAV
+var door_close_stream: AudioStreamWAV
+var drink_stream: AudioStreamWAV
 
 func generate_audio_streams():
 	# Generate low drone for ambient
 	ambient_player.stream = generate_drone(22050, 4.0)
 	ambient_player.volume_db = -10.0
+
+	safe_ambient_player.stream = generate_safe_ambient(22050, 4.0)
+	safe_ambient_player.volume_db = -80.0
+	door_open_stream = generate_door_sound(22050, 1.0, true)
+	door_close_stream = generate_door_sound(22050, 1.0, false)
+	drink_stream = generate_drink_sound(22050, 1.5)
 	
 	# Generate wind noise
 	wind_player.stream = generate_wind(22050, 3.0)
@@ -236,5 +250,96 @@ func generate_screamer(mix_rate: int, duration: float) -> AudioStreamWAV:
 		data[i * 2] = int_val & 0xFF
 		data[i * 2 + 1] = (int_val >> 8) & 0xFF
 		
+	stream.data = data
+	return stream
+
+func set_safe_mode(is_safe: bool):
+	if is_safe:
+		create_tween().tween_property(ambient_player, "volume_db", -80.0, 2.0)
+		create_tween().tween_property(wind_player, "volume_db", -80.0, 2.0)
+		create_tween().tween_property(safe_ambient_player, "volume_db", -15.0, 2.0)
+		safe_ambient_player.play()
+	else:
+		create_tween().tween_property(ambient_player, "volume_db", -10.0, 2.0)
+		create_tween().tween_property(wind_player, "volume_db", -18.0, 2.0)
+		create_tween().tween_property(safe_ambient_player, "volume_db", -80.0, 2.0)
+
+func play_door_open():
+	sfx_player.stream = door_open_stream
+	sfx_player.volume_db = 0.0
+	sfx_player.play()
+
+func play_door_close():
+	sfx_player.stream = door_close_stream
+	sfx_player.volume_db = 0.0
+	sfx_player.play()
+
+func play_drink():
+	sfx_player.stream = drink_stream
+	sfx_player.volume_db = 5.0
+	sfx_player.play()
+
+func generate_safe_ambient(mix_rate: int, duration: float) -> AudioStreamWAV:
+	var stream = AudioStreamWAV.new()
+	stream.format = AudioStreamWAV.FORMAT_16_BITS
+	stream.mix_rate = mix_rate
+	stream.stereo = false
+	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	stream.loop_end = int(mix_rate * duration)
+	var data = PackedByteArray()
+	var total_samples = int(mix_rate * duration)
+	data.resize(total_samples * 2)
+	for i in range(total_samples):
+		var t = float(i) / float(mix_rate)
+		var val = sin(t * 261.63 * TAU) * 0.2 + sin(t * 329.63 * TAU) * 0.15 + sin(t * 392.00 * TAU) * 0.1
+		var fade = 1.0
+		if i < 1000: fade = float(i) / 1000.0
+		elif i > total_samples - 1000: fade = float(total_samples - i) / 1000.0
+		val *= fade
+		var int_val = clampi(int(val * 32767.0), -32768, 32767)
+		data[i * 2] = int_val & 0xFF
+		data[i * 2 + 1] = (int_val >> 8) & 0xFF
+	stream.data = data
+	return stream
+
+func generate_door_sound(mix_rate: int, duration: float, is_open: bool) -> AudioStreamWAV:
+	var stream = AudioStreamWAV.new()
+	stream.format = AudioStreamWAV.FORMAT_16_BITS
+	stream.mix_rate = mix_rate
+	stream.stereo = false
+	stream.loop_mode = AudioStreamWAV.LOOP_DISABLED
+	var data = PackedByteArray()
+	var total_samples = int(mix_rate * duration)
+	data.resize(total_samples * 2)
+	for i in range(total_samples):
+		var t = float(i) / float(mix_rate)
+		var val = (randf() - 0.5) * exp(-t * 3.0) * 0.3
+		var freq = 150.0 if is_open else 80.0
+		val += sin(t * freq * TAU) * exp(-t * 5.0) * 0.5
+		var int_val = clampi(int(val * 32767.0), -32768, 32767)
+		data[i * 2] = int_val & 0xFF
+		data[i * 2 + 1] = (int_val >> 8) & 0xFF
+	stream.data = data
+	return stream
+
+func generate_drink_sound(mix_rate: int, duration: float) -> AudioStreamWAV:
+	var stream = AudioStreamWAV.new()
+	stream.format = AudioStreamWAV.FORMAT_16_BITS
+	stream.mix_rate = mix_rate
+	stream.stereo = false
+	stream.loop_mode = AudioStreamWAV.LOOP_DISABLED
+	var data = PackedByteArray()
+	var total_samples = int(mix_rate * duration)
+	data.resize(total_samples * 2)
+	for i in range(total_samples):
+		var t = float(i) / float(mix_rate)
+		var val = 0.0
+		if t < 0.2:
+			val = (randf() - 0.5) * exp(-t * 20.0) * 0.5
+		elif t > 0.4 and t < 0.7:
+			val = sin(t * 400.0 * TAU) * exp(-(t-0.4) * 10.0) * 0.3
+		var int_val = clampi(int(val * 32767.0), -32768, 32767)
+		data[i * 2] = int_val & 0xFF
+		data[i * 2 + 1] = (int_val >> 8) & 0xFF
 	stream.data = data
 	return stream

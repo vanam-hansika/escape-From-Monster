@@ -10,13 +10,13 @@ extends Node3D
 var game_ended = false
 var CELL_SIZE = 4.0
 
-# 1 = Wall, 0 = Empty path
+# 1 = Wall, 0 = Empty path, 2 = Safe Room (door faces -Z), 3 = Safe Room (door faces +Z)
 var maze_grid = [
 	[1,1,1,1,1,1,1,1,1,1,1,1,1],
-	[1,0,0,0,0,0,0,0,1,1,1,0,0], # Changed [1][12] to 0 for the door
+	[1,0,0,0,0,0,0,0,1,1,1,0,0],
 	[1,0,1,1,1,0,1,0,0,0,0,0,1],
-	[1,0,1,0,0,0,1,0,1,1,1,0,1],
-	[1,0,1,1,1,1,1,0,1,0,1,0,1],
+	[1,0,1,2,0,0,1,0,1,1,1,0,1],
+	[1,0,1,1,1,1,1,0,1,3,1,0,1],
 	[1,0,0,0,0,0,1,0,1,0,0,0,1],
 	[1,0,1,1,1,0,1,0,1,1,1,0,1],
 	[1,0,0,0,1,0,0,0,1,0,0,0,1],
@@ -27,6 +27,9 @@ var maze_grid = [
 	[1,1,1,1,1,1,1,1,1,1,1,1,1]
 ]
 
+var safe_room_scene = preload("res://safe_room.tscn")
+var consumable_scene = preload("res://consumable.tscn")
+
 func _ready():
 	# 1. Generate Floor
 	create_floor(Vector3(26.0, -0.1, 26.0), Vector3(52.0, 0.2, 52.0))
@@ -34,12 +37,29 @@ func _ready():
 	# 1.5. Generate Ceiling (Blocks sky lighting completely for maximum horror and flashlight effect)
 	create_ceiling(Vector3(26.0, 3.1, 26.0), Vector3(52.0, 0.2, 52.0))
 	
-	# 2. Generate Walls
+	# 2. Generate Walls and Safe Rooms
 	for r in range(maze_grid.size()):
 		for c in range(maze_grid[r].size()):
 			if maze_grid[r][c] == 1:
 				var wall_pos = Vector3(c * CELL_SIZE + CELL_SIZE / 2.0, 1.5, r * CELL_SIZE + CELL_SIZE / 2.0)
 				create_wall(wall_pos, Vector3(CELL_SIZE, 3.0, CELL_SIZE))
+			elif maze_grid[r][c] == 2 or maze_grid[r][c] == 3:
+				var safe_pos = Vector3(c * CELL_SIZE + CELL_SIZE / 2.0, 0.0, r * CELL_SIZE + CELL_SIZE / 2.0)
+				var safe_inst = safe_room_scene.instantiate()
+				safe_inst.position = safe_pos
+				# Orient door: 2 faces +X (rotation y=90), 3 faces +Z (rotation y=0)
+				if maze_grid[r][c] == 2:
+					safe_inst.rotation.y = deg_to_rad(90)
+				else:
+					safe_inst.rotation.y = 0.0
+				nav_region.add_child(safe_inst)
+				
+				# Spawn consumable in the safe room
+				var cons_inst = consumable_scene.instantiate()
+				# Alternate between water (0) and booster (1)
+				cons_inst.consumable_type = 0 if maze_grid[r][c] == 2 else 1
+				cons_inst.position = safe_pos + Vector3(0, 0, 0)
+				nav_region.add_child(cons_inst)
 				
 	# 3. Position Player, Monster, and Exit Door
 	player.global_position = cell_to_world(Vector2i(1, 1), 0.2)

@@ -1,0 +1,96 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://safe_room.gd" id="1_scr"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_door"]
+size = Vector3(4.0, 3.0, 0.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_door"]
+size = Vector3(4.0, 3.0, 0.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_door"]
+albedo_color = Color(0.1, 0.5, 0.8, 1.0)
+roughness = 0.5
+metallic = 0.8
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_trigger"]
+size = Vector3(4.0, 3.0, 6.0)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_safe"]
+size = Vector3(3.8, 3.0, 3.8)
+
+[sub_resource type="BoxMesh" id="BoxMesh_wall_side"]
+size = Vector3(0.2, 3.0, 4.0)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_wall_side"]
+size = Vector3(0.2, 3.0, 4.0)
+
+[sub_resource type="BoxMesh" id="BoxMesh_wall_back"]
+size = Vector3(4.0, 3.0, 0.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_wall_back"]
+size = Vector3(4.0, 3.0, 0.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wall"]
+albedo_color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="SafeRoom" type="Node3D"]
+script = ExtResource("1_scr")
+
+[node name="DoorBody" type="AnimatableBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 2.0)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="DoorBody"]
+mesh = SubResource("BoxMesh_door")
+material_override = SubResource("StandardMaterial3D_door")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="DoorBody"]
+shape = SubResource("BoxShape3D_door")
+
+[node name="DoorTrigger" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 2.0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="DoorTrigger"]
+shape = SubResource("BoxShape3D_trigger")
+
+[node name="SafeZoneTrigger" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="SafeZoneTrigger"]
+shape = SubResource("BoxShape3D_safe")
+
+[node name="WallLeft" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.0, 1.5, 0)
+mesh = SubResource("BoxMesh_wall_side")
+material_override = SubResource("StandardMaterial3D_wall")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="WallLeft"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="WallLeft/StaticBody3D"]
+shape = SubResource("BoxShape3D_wall_side")
+
+[node name="WallRight" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.0, 1.5, 0)
+mesh = SubResource("BoxMesh_wall_side")
+material_override = SubResource("StandardMaterial3D_wall")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="WallRight"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="WallRight/StaticBody3D"]
+shape = SubResource("BoxShape3D_wall_side")
+
+[node name="WallBack" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -2.0)
+mesh = SubResource("BoxMesh_wall_back")
+material_override = SubResource("StandardMaterial3D_wall")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="WallBack"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="WallBack/StaticBody3D"]
+shape = SubResource("BoxShape3D_wall_back")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
+light_color = Color(0.6, 1, 0.6, 1)
+light_energy = 2.0
+omni_range = 4.0

@@ -24,6 +24,15 @@ var can_move: bool = true
 var mobile_movement_vector: Vector2 = Vector2.ZERO
 var mobile_sprint_active: bool = false
 
+var is_safe: bool = false
+
+func drink_consumable():
+	if stamina:
+		stamina.current_stamina = stamina.max_stamina
+	var audio = get_tree().current_scene.get_node_or_null("AudioManager")
+	if audio and audio.has_method("play_drink"):
+		audio.play_drink()
+
 func _ready():
 	add_to_group("player")
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -37,19 +46,20 @@ func _ready():
 		
 	# Setup InputMap actions programmatically
 	var inputs = {
-		"move_forward": KEY_W,
-		"move_backward": KEY_S,
-		"move_left": KEY_A,
-		"move_right": KEY_D,
-		"sprint": KEY_SHIFT,
-		"toggle_flashlight": KEY_F,
+		"move_forward": [KEY_W, KEY_UP],
+		"move_backward": [KEY_S, KEY_DOWN],
+		"move_left": [KEY_A, KEY_LEFT],
+		"move_right": [KEY_D, KEY_RIGHT],
+		"sprint": [KEY_SHIFT],
+		"toggle_flashlight": [KEY_F],
 	}
 	
 	for action in inputs:
 		if not InputMap.has_action(action):
 			InputMap.add_action(action)
+		for keycode in inputs[action]:
 			var event = InputEventKey.new()
-			event.physical_keycode = inputs[action]
+			event.physical_keycode = keycode
 			InputMap.action_add_event(action, event)
 
 func _unhandled_input(event):

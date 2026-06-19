@@ -114,8 +114,16 @@ func _physics_process(delta):
 		return
 	
 	if is_instance_valid(player):
-		# The monster relentlessly hunts the player down!
-		nav_agent.set_target_position(player.global_position)
+		if player.is_safe:
+			if current_state != "SEARCHING":
+				current_state = "SEARCHING"
+				# When player is safe, the monster will just roam randomly or stay put
+				# We will just tell it to go to a random position nearby
+				var random_offset = Vector3(randf_range(-10, 10), 0, randf_range(-10, 10))
+				nav_agent.set_target_position(global_position + random_offset)
+		else:
+			current_state = "CHASING"
+			nav_agent.set_target_position(player.global_position)
 		var next_path_pos = nav_agent.get_next_path_position()
 		
 		var new_velocity = Vector3.ZERO
