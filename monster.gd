@@ -142,7 +142,7 @@ func _physics_process(delta):
 				patrol_target = get_random_patrol_point()
 				nav_agent.set_target_position(patrol_target)
 			elif current_state == "PATROL":
-				if nav_agent.is_navigation_finished() or global_position.distance_to(patrol_target) < 2.0 or nav_agent.get_nav_path().size() == 0:
+				if nav_agent.is_navigation_finished() or global_position.distance_to(patrol_target) < 2.0:
 					patrol_target = get_random_patrol_point()
 					nav_agent.set_target_position(patrol_target)
 			
