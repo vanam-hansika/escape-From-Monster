@@ -44,7 +44,7 @@ func _ready():
 		mesh_inst.mesh = quad
 		mesh_inst.position = Vector3(0, 1.3, 0)
 		
-		# Custom shader to remove dark background and add FAKE VOLUMETRIC NORMALS!
+		# Custom shader to remove dark background
 		var mat = ShaderMaterial.new()
 		var shader = Shader.new()
 		shader.code = """
@@ -55,23 +55,18 @@ uniform sampler2D tex : source_color;
 void fragment() {
 	vec4 col = texture(tex, UV);
 	float luma = dot(col.rgb, vec3(0.299, 0.587, 0.114));
-	if (luma < 0.04) {
+	// Very low threshold to not accidentally cut off dark parts of the monster
+	if (luma < 0.02) {
 		discard;
 	} else {
 		ALBEDO = col.rgb;
 		
-		// Fake 3D Volumetric Lighting!
-		vec2 centered_uv = UV * 2.0 - 1.0;
-		float nx = centered_uv.x;
-		float nz = sqrt(1.0 - clamp(nx*nx, 0.0, 1.0));
-		vec3 fake_normal = normalize(vec3(nx, 0.0, nz));
+		// Add slight emission so it's never completely pitch black
+		EMISSION = col.rgb * 0.15;
 		
-		NORMAL = (VIEW_MATRIX * vec4(fake_normal, 0.0)).xyz;
-		
-		// Realistic fleshy shading
-		ROUGHNESS = 0.35;
-		METALLIC = 0.2;
-		SPECULAR = 0.8;
+		// Realistic fleshy shading, removed fake normals to prevent half-black lighting issues
+		ROUGHNESS = 0.6;
+		METALLIC = 0.1;
 	}
 }
 """
