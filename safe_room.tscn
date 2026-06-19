@@ -17,7 +17,7 @@ metallic = 0.8
 size = Vector3(4.0, 3.0, 6.0)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_safe"]
-size = Vector3(3.8, 3.0, 3.8)
+size = Vector3(3.8, 3.0, 2.5)
 
 [sub_resource type="BoxMesh" id="BoxMesh_wall_side"]
 size = Vector3(0.2, 3.0, 4.0)
@@ -54,13 +54,13 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 2.0)
 shape = SubResource("BoxShape3D_trigger")
 
 [node name="SafeZoneTrigger" type="Area3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -0.75)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="SafeZoneTrigger"]
 shape = SubResource("BoxShape3D_safe")
 
 [node name="WallLeft" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.0, 1.5, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.9, 1.5, 0)
 mesh = SubResource("BoxMesh_wall_side")
 material_override = SubResource("StandardMaterial3D_wall")
 
@@ -70,7 +70,7 @@ material_override = SubResource("StandardMaterial3D_wall")
 shape = SubResource("BoxShape3D_wall_side")
 
 [node name="WallRight" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.0, 1.5, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.9, 1.5, 0)
 mesh = SubResource("BoxMesh_wall_side")
 material_override = SubResource("StandardMaterial3D_wall")
 
@@ -80,7 +80,7 @@ material_override = SubResource("StandardMaterial3D_wall")
 shape = SubResource("BoxShape3D_wall_side")
 
 [node name="WallBack" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -2.0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -1.9)
 mesh = SubResource("BoxMesh_wall_back")
 material_override = SubResource("StandardMaterial3D_wall")
 

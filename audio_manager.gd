@@ -257,7 +257,7 @@ func set_safe_mode(is_safe: bool):
 	if is_safe:
 		create_tween().tween_property(ambient_player, "volume_db", -80.0, 2.0)
 		create_tween().tween_property(wind_player, "volume_db", -80.0, 2.0)
-		create_tween().tween_property(safe_ambient_player, "volume_db", -15.0, 2.0)
+		create_tween().tween_property(safe_ambient_player, "volume_db", -5.0, 2.0)
 		safe_ambient_player.play()
 	else:
 		create_tween().tween_property(ambient_player, "volume_db", -10.0, 2.0)
@@ -291,7 +291,13 @@ func generate_safe_ambient(mix_rate: int, duration: float) -> AudioStreamWAV:
 	data.resize(total_samples * 2)
 	for i in range(total_samples):
 		var t = float(i) / float(mix_rate)
-		var val = sin(t * 261.63 * TAU) * 0.2 + sin(t * 329.63 * TAU) * 0.15 + sin(t * 392.00 * TAU) * 0.1
+		var note_idx = int(t * 2.0) % 4
+		var freqs = [261.63, 329.63, 392.00, 523.25]
+		var freq = freqs[note_idx]
+		var t_note = fmod(t * 2.0, 1.0)
+		var env = exp(-t_note * 4.0)
+		var val = (sin(t * freq * TAU) + 0.3 * sin(t * freq * 2.0 * TAU)) * env * 0.4
+		val += (sin(t * 261.63 * TAU) * 0.15 + sin(t * 329.63 * TAU) * 0.1) * 0.5
 		var fade = 1.0
 		if i < 1000: fade = float(i) / 1000.0
 		elif i > total_samples - 1000: fade = float(total_samples - i) / 1000.0
