@@ -113,7 +113,7 @@ func _physics_process(delta):
 	current_speed = base_speed + (1.0 - sanity_percent) * max_extra_speed
 	
 	# Trigger jumpscare if close enough (bulletproof)
-	if not has_caught_player and global_position.distance_to(player.global_position) < 1.5:
+	if not has_caught_player and not player.is_safe and global_position.distance_to(player.global_position) < 1.5:
 		_on_body_entered(player)
 		return
 	
@@ -186,6 +186,8 @@ var has_caught_player = false
 func _on_body_entered(body):
 	if has_caught_player: return
 	if body.is_in_group("player"):
+		if body.is_safe: return
+		
 		# Prevent instant trigger if physics engine caught them overlapping at (0,0,0) before teleport
 		if global_position.distance_to(body.global_position) > 2.0:
 			return
