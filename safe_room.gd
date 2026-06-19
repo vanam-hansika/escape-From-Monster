@@ -5,52 +5,41 @@ extends Node3D
 
 var door_open = false
 var tween: Tween
-
-var player_in_door_trigger = false
-var player_in_safe_zone = false
+var player = null
 
 func _ready():
-	$DoorTrigger.body_entered.connect(_on_door_trigger_entered)
-	$DoorTrigger.body_exited.connect(_on_door_trigger_exited)
 	$SafeZoneTrigger.body_entered.connect(_on_safe_zone_entered)
 	$SafeZoneTrigger.body_exited.connect(_on_safe_zone_exited)
 
-func _on_door_trigger_entered(body):
-	if body.is_in_group("player"):
-		player_in_door_trigger = true
-		update_door_state()
-
-func _on_door_trigger_exited(body):
-	if body.is_in_group("player"):
-		player_in_door_trigger = false
-		update_door_state()
+func _process(delta):
+	if not is_instance_valid(player):
+		var players = get_tree().get_nodes_in_group("player")
+		if players.size() > 0:
+			player = players[0]
+			
+	if is_instance_valid(player):
+		var door_global_pos = to_global(Vector3(0, 1.5, 2.0))
+		var door_pos_2d = Vector2(door_global_pos.x, door_global_pos.z)
+		var player_pos_2d = Vector2(player.global_position.x, player.global_position.z)
+		
+		var dist = player_pos_2d.distance_to(door_pos_2d)
+		
+		if dist < 1.9:
+			open_door()
+		else:
+			close_door()
 
 func _on_safe_zone_entered(body):
 	if body.is_in_group("player"):
-		player_in_safe_zone = true
 		body.is_safe = true
 		if audio_manager and audio_manager.has_method("set_safe_mode"):
 			audio_manager.set_safe_mode(true)
-		update_door_state()
 
 func _on_safe_zone_exited(body):
 	if body.is_in_group("player"):
-		player_in_safe_zone = false
 		body.is_safe = false
 		if audio_manager and audio_manager.has_method("set_safe_mode"):
 			audio_manager.set_safe_mode(false)
-		update_door_state()
-
-func update_door_state():
-	if player_in_safe_zone:
-		# Player is inside the safe room, close the door!
-		close_door()
-	elif player_in_door_trigger:
-		# Player is approaching or leaving (outside the safe zone but in trigger), open the door!
-		open_door()
-	else:
-		# Player has left the area entirely, close the door!
-		close_door()
 
 func open_door():
 	if door_open: return

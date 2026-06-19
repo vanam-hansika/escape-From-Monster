@@ -17,7 +17,7 @@ metallic = 0.8
 size = Vector3(4.0, 3.0, 6.0)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_safe"]
-size = Vector3(3.8, 3.0, 2.5)
+size = Vector3(3.8, 3.0, 3.8)
 
 [sub_resource type="BoxMesh" id="BoxMesh_wall_side"]
 size = Vector3(0.2, 3.0, 4.0)
@@ -54,7 +54,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 2.0)
 shape = SubResource("BoxShape3D_trigger")
 
 [node name="SafeZoneTrigger" type="Area3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -0.75)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="SafeZoneTrigger"]
 shape = SubResource("BoxShape3D_safe")
