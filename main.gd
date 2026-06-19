@@ -72,7 +72,7 @@ func _ready():
 	# 4. Bake Navigation Mesh
 	var nav_mesh = NavigationMesh.new()
 	nav_mesh.agent_height = 2.0
-	nav_mesh.agent_radius = 0.5
+	nav_mesh.agent_radius = 0.8
 	nav_mesh.agent_max_slope = 45.0
 	nav_region.navigation_mesh = nav_mesh
 	

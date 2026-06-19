@@ -10,8 +10,14 @@ var player: CharacterBody3D = null
 var current_speed: float = 3.0
 var walk_time: float = 0.0
 
-var current_state: String = "IDLE"
+var current_state: String = "PATROL"
 var last_known_pos: Vector3 = Vector3.ZERO
+var patrol_target: Vector3 = Vector3.ZERO
+
+func get_random_patrol_point() -> Vector3:
+	var rand_x = randf_range(4.0, 48.0)
+	var rand_z = randf_range(4.0, 48.0)
+	return Vector3(rand_x, 0.0, rand_z)
 
 func _ready():
 	add_to_group("monster")
@@ -114,20 +120,35 @@ func _physics_process(delta):
 		return
 	
 	if is_instance_valid(player):
-		if player.is_safe:
-			if current_state != "SEARCHING":
-				current_state = "SEARCHING"
-				# Walk far away from the safe room to prevent clipping/flickering through walls
-				var rand_x = randf_range(10.0, 40.0)
-				var rand_z = randf_range(10.0, 40.0)
-				nav_agent.set_target_position(Vector3(rand_x, 0, rand_z))
-		else:
-			current_state = "CHASING"
+		var dist_to_player = global_position.distance_to(player.global_position)
+		var can_see_player = false
+		
+		if not player.is_safe:
+			if dist_to_player < 15.0:
+				var space_state = get_world_3d().direct_space_state
+				var query = PhysicsRayQueryParameters3D.create(global_position + Vector3(0, 1.5, 0), player.global_position + Vector3(0, 1.5, 0))
+				var result = space_state.intersect_ray(query)
+				if result and result.collider == player:
+					can_see_player = true
+			if dist_to_player < 6.0:
+				can_see_player = true # Hearing range / smell
+				
+		if can_see_player:
+			current_state = "CHASE"
 			nav_agent.set_target_position(player.global_position)
+		else:
+			if current_state == "CHASE" or current_state == "IDLE":
+				current_state = "PATROL"
+				patrol_target = get_random_patrol_point()
+				nav_agent.set_target_position(patrol_target)
+			elif current_state == "PATROL":
+				if nav_agent.is_navigation_finished() or global_position.distance_to(patrol_target) < 2.0 or nav_agent.get_nav_path().size() == 0:
+					patrol_target = get_random_patrol_point()
+					nav_agent.set_target_position(patrol_target)
 			
 		if has_node("MonsterLight"):
 			var ml = get_node("MonsterLight")
-			if current_state == "SEARCHING":
+			if current_state == "PATROL" and player.is_safe:
 				ml.light_energy = lerp(ml.light_energy, 0.0, delta * 2.0)
 			else:
 				ml.light_energy = lerp(ml.light_energy, 5.0, delta * 2.0)
@@ -137,10 +158,14 @@ func _physics_process(delta):
 		var new_velocity = Vector3.ZERO
 		var current_pos = global_position
 		if global_position.distance_to(next_path_pos) > 0.1:
-			new_velocity = (next_path_pos - current_pos).normalized() * current_speed
-			new_velocity.y = 0 # keep monster on floor
+			var dir = (next_path_pos - current_pos)
+			dir.y = 0
+			if dir.length() > 0:
+				dir = dir.normalized()
+			new_velocity = dir * current_speed
 				
-		velocity = new_velocity
+		velocity.x = new_velocity.x
+		velocity.z = new_velocity.z
 		
 		# Gravity for monster
 		if not is_on_floor():
