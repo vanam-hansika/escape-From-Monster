@@ -20,6 +20,7 @@ func _ready():
 	set_physics_process(false) # Wait for navmesh to bake!
 	
 	var light = OmniLight3D.new()
+	light.name = "MonsterLight"
 	light.light_color = Color(1.0, 0.0, 0.0)
 	light.light_energy = 5.0
 	light.omni_range = 10.0
@@ -121,13 +122,21 @@ func _physics_process(delta):
 		if player.is_safe:
 			if current_state != "SEARCHING":
 				current_state = "SEARCHING"
-				# When player is safe, the monster will just roam randomly or stay put
-				# We will just tell it to go to a random position nearby
-				var random_offset = Vector3(randf_range(-10, 10), 0, randf_range(-10, 10))
-				nav_agent.set_target_position(global_position + random_offset)
+				# Walk far away from the safe room to prevent clipping/flickering through walls
+				var rand_x = randf_range(10.0, 40.0)
+				var rand_z = randf_range(10.0, 40.0)
+				nav_agent.set_target_position(Vector3(rand_x, 0, rand_z))
 		else:
 			current_state = "CHASING"
 			nav_agent.set_target_position(player.global_position)
+			
+		if has_node("MonsterLight"):
+			var ml = get_node("MonsterLight")
+			if current_state == "SEARCHING":
+				ml.light_energy = lerp(ml.light_energy, 0.0, delta * 2.0)
+			else:
+				ml.light_energy = lerp(ml.light_energy, 5.0, delta * 2.0)
+				
 		var next_path_pos = nav_agent.get_next_path_position()
 		
 		var new_velocity = Vector3.ZERO

@@ -18,6 +18,10 @@ func find_monster():
 		monster = monsters[0]
 
 func update_sanity(delta: float, is_dark: bool):
+	if player.is_safe:
+		current_sanity = min(current_sanity + 15.0 * delta, max_sanity)
+		return
+		
 	var decay = 0.0
 	
 	if is_dark:
@@ -31,7 +35,6 @@ func update_sanity(delta: float, is_dark: bool):
 	if monster:
 		var dist = player.global_position.distance_to(monster.global_position)
 		if dist < 15.0:
-			# Decreases rapidly as monster gets closer
 			var proximity_factor = (15.0 - dist) / 15.0
 			decay += proximity_factor * monster_near_decay_rate
 			
