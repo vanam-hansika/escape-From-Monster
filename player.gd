@@ -57,8 +57,11 @@ func _ready():
 	for action in inputs:
 		if not InputMap.has_action(action):
 			InputMap.add_action(action)
+		else:
+			InputMap.action_erase_events(action)
 		for keycode in inputs[action]:
 			var event = InputEventKey.new()
+			event.keycode = keycode
 			event.physical_keycode = keycode
 			InputMap.action_add_event(action, event)
 

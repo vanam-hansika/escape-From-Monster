@@ -140,7 +140,7 @@ func _update_bar_color(bar: ProgressBar):
 		var sanity_val = player.get_node("Sanity").current_sanity
 		if sanity_val < 50.0:
 			$HUD/Vignette.visible = true
-			$HUD/Vignette.color.a = (50.0 - sanity_val) / 50.0 * 0.75
+			$HUD/Vignette.modulate.a = (50.0 - sanity_val) / 50.0 * 0.75
 		else:
 			$HUD/Vignette.visible = false
 			
