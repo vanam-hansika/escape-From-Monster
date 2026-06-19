@@ -30,7 +30,11 @@ func _ready():
 		get_node("MeshInstance3D").queue_free()
 		
 	# Load the requested custom devil image safely
-	var tex = load("res://custom_devil.jpg")
+	var tex = null
+	var img = Image.new()
+	if img.load("res://custom_devil.jpg") == OK:
+		tex = ImageTexture.create_from_image(img)
+		
 	if tex:
 		var mesh_inst = MeshInstance3D.new()
 		var quad = QuadMesh.new()
@@ -182,6 +186,10 @@ var has_caught_player = false
 func _on_body_entered(body):
 	if has_caught_player: return
 	if body.is_in_group("player"):
+		# Prevent instant trigger if physics engine caught them overlapping at (0,0,0) before teleport
+		if global_position.distance_to(body.global_position) > 2.0:
+			return
+			
 		has_caught_player = true
 		set_physics_process(false)
 		

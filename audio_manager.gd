@@ -291,16 +291,21 @@ func generate_safe_ambient(mix_rate: int, duration: float) -> AudioStreamWAV:
 	data.resize(total_samples * 2)
 	for i in range(total_samples):
 		var t = float(i) / float(mix_rate)
-		var note_idx = int(t * 2.0) % 4
-		var freqs = [261.63, 329.63, 392.00, 523.25]
-		var freq = freqs[note_idx]
-		var t_note = fmod(t * 2.0, 1.0)
-		var env = exp(-t_note * 4.0)
-		var val = (sin(t * freq * TAU) + 0.3 * sin(t * freq * 2.0 * TAU)) * env * 0.4
-		val += (sin(t * 261.63 * TAU) * 0.15 + sin(t * 329.63 * TAU) * 0.1) * 0.5
+		var phase = fmod(t / duration, 1.0)
+		var base_freq = 261.63
+		if phase > 0.5: base_freq = 220.0
+		var f1 = base_freq
+		var f2 = base_freq * 1.25
+		var f3 = base_freq * 1.5
+		if phase > 0.5: f2 = base_freq * 1.189
+		var val = 0.0
+		val += (sin(t * f1 * TAU) + 0.1 * sin(t * f1 * 2 * TAU)) * 0.3
+		val += (sin(t * f2 * TAU) + 0.1 * sin(t * f2 * 2 * TAU)) * 0.25
+		val += (sin(t * f3 * TAU) + 0.1 * sin(t * f3 * 2 * TAU)) * 0.2
+		val *= 0.8 + 0.2 * sin(t * 0.5 * TAU)
 		var fade = 1.0
-		if i < 1000: fade = float(i) / 1000.0
-		elif i > total_samples - 1000: fade = float(total_samples - i) / 1000.0
+		if i < 2000: fade = float(i) / 2000.0
+		elif i > total_samples - 2000: fade = float(total_samples - i) / 2000.0
 		val *= fade
 		var int_val = clampi(int(val * 32767.0), -32768, 32767)
 		data[i * 2] = int_val & 0xFF
@@ -319,9 +324,21 @@ func generate_door_sound(mix_rate: int, duration: float, is_open: bool) -> Audio
 	data.resize(total_samples * 2)
 	for i in range(total_samples):
 		var t = float(i) / float(mix_rate)
-		var val = (randf() - 0.5) * exp(-t * 3.0) * 0.3
-		var freq = 150.0 if is_open else 80.0
-		val += sin(t * freq * TAU) * exp(-t * 5.0) * 0.5
+		var val = 0.0
+		if is_open:
+			var base_freq = 300.0 + 100.0 * sin(t * 3.0)
+			var creak1 = sin(t * base_freq * TAU) * exp(-t * 1.5)
+			var creak2 = sin(t * (base_freq * 1.5) * TAU) * exp(-t * 2.0)
+			var noise = (randf() - 0.5) * 0.2
+			val = (creak1 + creak2 * 0.5 + noise) * 0.6
+		else:
+			if t < 0.15:
+				var freq = lerp(120.0, 40.0, t / 0.15)
+				val = sin(t * freq * TAU) * exp(-t * 20.0) * 1.5
+				val += (randf() - 0.5) * exp(-t * 30.0) * 0.5
+			elif t > 0.2 and t < 0.25:
+				var click_t = t - 0.2
+				val = sin(click_t * 800.0 * TAU) * exp(-click_t * 50.0) * 0.8
 		var int_val = clampi(int(val * 32767.0), -32768, 32767)
 		data[i * 2] = int_val & 0xFF
 		data[i * 2 + 1] = (int_val >> 8) & 0xFF

@@ -40,6 +40,10 @@ func _ready():
 	if has_node("CameraHead/Camera3D/HandContainer/WristLeft"):
 		$CameraHead/Camera3D/HandContainer/WristLeft.hide()
 		
+	var flashlight = get_node_or_null("CameraHead/Camera3D/HandContainer/WristRight/FistRight/FlashlightHandle/FlashlightHead/FlashlightSpotLight")
+	if flashlight:
+		flashlight.shadow_bias = 0.05
+		
 	if flashlight:
 		flashlight.shadow_bias = 0.15
 		flashlight.shadow_normal_bias = 2.5
