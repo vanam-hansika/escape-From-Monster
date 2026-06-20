@@ -27,7 +27,48 @@ func _ready():
 		$HUD/PauseToggleButton.pressed.connect(toggle_pause)
 	
 	setup_mobile_controls()
+	setup_debug_console()
 	call_deferred("find_player")
+
+var debug_label: Label = null
+var debug_scroll: ScrollContainer = null
+var log_lines: Array = []
+
+func setup_debug_console():
+	var canvas = CanvasLayer.new()
+	canvas.layer = 100
+	add_child(canvas)
+	
+	debug_scroll = ScrollContainer.new()
+	debug_scroll.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+	debug_scroll.size = Vector2(400, 300)
+	debug_scroll.position = Vector2(10, 80)
+	debug_scroll.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	canvas.add_child(debug_scroll)
+	
+	debug_label = Label.new()
+	debug_label.text = "DEBUG CONSOLE LOADED...\n"
+	debug_label.add_theme_font_size_override("font_size", 12)
+	debug_label.add_theme_color_override("font_color", Color.GREEN)
+	debug_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	debug_label.add_theme_constant_override("outline_size", 4)
+	debug_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	debug_scroll.add_child(debug_label)
+	
+	custom_log("System initialized on: " + OS.get_name())
+
+
+func custom_log(text: String):
+	log_lines.append(text)
+	if log_lines.size() > 40:
+		log_lines.remove_at(0)
+	if debug_label:
+		debug_label.text = "\n".join(log_lines)
+		# Scroll to bottom
+		await get_tree().process_frame
+		if debug_scroll:
+			debug_scroll.scroll_vertical = 99999
+
 
 var hand_sway_time = 0.0
 
@@ -176,18 +217,20 @@ func _on_restart_pressed():
 	get_tree().reload_current_scene()
 
 func _on_joystick_vector_changed(vector: Vector2):
-	if player:
+	if is_instance_valid(player):
 		player.mobile_movement_vector = vector
 
 func _on_look_vector_changed(relative: Vector2):
-	if player and player.can_move:
+	if is_instance_valid(player) and player.can_move:
 		var sensitivity_scale = 0.6
 		player.rotate_y(-relative.x * player.mouse_sensitivity * sensitivity_scale)
-		player.head.rotate_x(-relative.y * player.mouse_sensitivity * sensitivity_scale)
-		player.head.rotation.x = clamp(player.head.rotation.x, deg_to_rad(-80), deg_to_rad(80))
+		if is_instance_valid(player.head):
+			player.head.rotate_x(-relative.y * player.mouse_sensitivity * sensitivity_scale)
+			player.head.rotation.x = clamp(player.head.rotation.x, deg_to_rad(-80), deg_to_rad(80))
 		
 		player.sway_target_rot.y = -relative.x * 0.02
 		player.sway_target_rot.x = -relative.y * 0.02
+
 
 func _on_sprint_button_down():
 	if player:

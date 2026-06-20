@@ -29,10 +29,11 @@ func update_sanity(delta: float, is_dark: bool):
 	else:
 		decay += light_decay_rate
 		
-	if not monster:
+	if not is_instance_valid(monster):
+		monster = null
 		find_monster()
 		
-	if monster:
+	if is_instance_valid(monster):
 		var dist = player.global_position.distance_to(monster.global_position)
 		if dist < 15.0:
 			var proximity_factor = (15.0 - dist) / 15.0
@@ -44,3 +45,4 @@ func update_sanity(delta: float, is_dark: bool):
 		var main = get_tree().current_scene
 		if main and main.has_method("game_over_sanity"):
 			main.game_over_sanity()
+

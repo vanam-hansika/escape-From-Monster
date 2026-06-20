@@ -55,10 +55,13 @@ func _ready():
 
 func _start_ambient_after_load():
 	await get_tree().create_timer(0.3).timeout
+	var ui = get_tree().current_scene.get_node_or_null("UI")
+	if ui and ui.has_method("custom_log"): ui.custom_log("LOG: Ambient & wind start play requested")
 	if ambient_player.stream:
 		ambient_player.play()
 	if wind_player.stream:
 		wind_player.play()
+
 
 func _physics_process(delta):
 	# Fallbacks to find player and monster in groups
@@ -151,25 +154,23 @@ var drink_stream: AudioStream
 var win_stream: AudioStream
 
 func generate_audio_streams():
-	# Generate low drone for ambient
-	ambient_player.stream = generate_drone(22050, 4.0)
+	var ui = get_tree().current_scene.get_node_or_null("UI")
+	if ui and ui.has_method("custom_log"): ui.custom_log("LOG: Loading audio streams...")
+	
+	ambient_player.stream = load("res://ambient_drone.wav")
 	ambient_player.volume_db = -10.0
+	if ui and ui.has_method("custom_log"): ui.custom_log("LOG: Ambient drone loaded successfully")
 
 	var peaceful_music_stream = load("res://peaceful music.mp3")
 	if peaceful_music_stream:
 		peaceful_music_stream.loop = true
 		safe_ambient_player.stream = peaceful_music_stream
-	else:
-		safe_ambient_player.stream = generate_safe_ambient(22050, 4.0)
 	safe_ambient_player.volume_db = -80.0
 	
 	var slide_door_s = load("res://sliding door opening sound.mp3")
 	if slide_door_s:
 		door_open_stream = slide_door_s
 		door_close_stream = slide_door_s
-	else:
-		door_open_stream = generate_door_sound(22050, 1.0, true)
-		door_close_stream = generate_door_sound(22050, 1.0, false)
 		
 	var growl_s = load("res://monster growl.mp3")
 	if growl_s:
@@ -177,157 +178,21 @@ func generate_audio_streams():
 		growl_player.stream = growl_s
 		growl_player.volume_db = -80.0
 		
-	drink_stream = generate_drink_sound(22050, 1.5)
+	drink_stream = load("res://drink_sound.wav")
 	
 	var win_s = load("res://wiining sound.mp3")
 	if win_s:
 		win_stream = win_s
 	
-	# Generate wind noise
-	wind_player.stream = generate_wind(22050, 3.0)
+	wind_player.stream = load("res://wind_noise.wav")
 	wind_player.volume_db = -18.0
+	if ui and ui.has_method("custom_log"): ui.custom_log("LOG: Wind noise loaded successfully")
 	
-	# Generate heartbeat thump
-	heartbeat_player.stream = generate_heartbeat(22050, 0.4)
+	heartbeat_player.stream = load("res://heartbeat.wav")
 	
-	# Generate jumpscare scream
-	jumpscare_stream = generate_screamer(22050, 1.5)
+	jumpscare_stream = load("res://jumpscare_scream.wav")
+	if ui and ui.has_method("custom_log"): ui.custom_log("LOG: All audio streams loaded successfully!")
 
-# Helper generators returning AudioStreamWAV
-
-func generate_drone(mix_rate: int, duration: float) -> AudioStreamWAV:
-	var stream = AudioStreamWAV.new()
-	stream.format = AudioStreamWAV.FORMAT_16_BITS
-	stream.mix_rate = mix_rate
-	stream.stereo = false
-	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
-	stream.loop_end = int(mix_rate * duration)
-	
-	var data = PackedByteArray()
-	var total_samples = int(mix_rate * duration)
-	data.resize(total_samples * 2)
-	
-	for i in range(total_samples):
-		var t = float(i) / float(mix_rate)
-		# Low frequency combination (drone)
-		var val = sin(t * 55.0 * TAU) * 0.4 + sin(t * 82.0 * TAU) * 0.3 + sin(t * 110.0 * TAU) * 0.2
-		# Creepy high-pitched dissonance (pulsating)
-		val += sin(t * 880.0 * TAU) * 0.15 * sin(t * 0.5 * TAU)
-		val += sin(t * 932.0 * TAU) * 0.15 * cos(t * 0.7 * TAU)
-		# Add a bit of low-frequency noise
-		val += (randf() - 0.5) * 0.1
-		# Fade in/out at loop boundaries to avoid clicking
-		var fade = 1.0
-		if i < 1000:
-			fade = float(i) / 1000.0
-		elif i > total_samples - 1000:
-			fade = float(total_samples - i) / 1000.0
-		val *= fade
-		
-		var int_val = clampi(int(val * 32767.0), -32768, 32767)
-		data[i * 2] = int_val & 0xFF
-		data[i * 2 + 1] = (int_val >> 8) & 0xFF
-		
-	stream.data = data
-	return stream
-
-func generate_wind(mix_rate: int, duration: float) -> AudioStreamWAV:
-	var stream = AudioStreamWAV.new()
-	stream.format = AudioStreamWAV.FORMAT_16_BITS
-	stream.mix_rate = mix_rate
-	stream.stereo = false
-	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
-	stream.loop_end = int(mix_rate * duration)
-	
-	var data = PackedByteArray()
-	var total_samples = int(mix_rate * duration)
-	data.resize(total_samples * 2)
-	
-	var last_val = 0.0
-	for i in range(total_samples):
-		# Low-pass filtered noise for wind
-		var noise = randf() - 0.5
-		var val = last_val * 0.95 + noise * 0.05
-		last_val = val
-		# Dynamic wind gusting effect
-		var t = float(i) / float(mix_rate)
-		var gust = 0.5 + 0.5 * sin(t * 1.5 * TAU) * cos(t * 0.7 * TAU)
-		val *= gust * 0.7
-		
-		# Fade at boundaries
-		var fade = 1.0
-		if i < 2000:
-			fade = float(i) / 2000.0
-		elif i > total_samples - 2000:
-			fade = float(total_samples - i) / 2000.0
-		val *= fade
-		
-		var int_val = clampi(int(val * 32767.0), -32768, 32767)
-		data[i * 2] = int_val & 0xFF
-		data[i * 2 + 1] = (int_val >> 8) & 0xFF
-		
-	stream.data = data
-	return stream
-
-func generate_heartbeat(mix_rate: int, duration: float) -> AudioStreamWAV:
-	var stream = AudioStreamWAV.new()
-	stream.format = AudioStreamWAV.FORMAT_16_BITS
-	stream.mix_rate = mix_rate
-	stream.stereo = false
-	stream.loop_mode = AudioStreamWAV.LOOP_DISABLED
-	
-	var data = PackedByteArray()
-	var total_samples = int(mix_rate * duration)
-	data.resize(total_samples * 2)
-	
-	for i in range(total_samples):
-		var t = float(i) / float(mix_rate)
-		var val = 0.0
-		
-		# Heartbeat thud: two distinct thuds close together
-		# Thud 1 at t=0.0 to 0.12, Thud 2 at t=0.15 to 0.27
-		if t < 0.12:
-			var pulse_t = t / 0.12
-			val = sin(pulse_t * PI) * sin(t * 60.0 * TAU) * exp(-pulse_t * 5.0)
-		elif t > 0.15 and t < 0.27:
-			var pulse_t = (t - 0.15) / 0.12
-			val = sin(pulse_t * PI) * sin((t - 0.15) * 50.0 * TAU) * exp(-pulse_t * 5.0) * 0.8
-			
-		var int_val = clampi(int(val * 32767.0), -32768, 32767)
-		data[i * 2] = int_val & 0xFF
-		data[i * 2 + 1] = (int_val >> 8) & 0xFF
-		
-	stream.data = data
-	return stream
-
-func generate_screamer(mix_rate: int, duration: float) -> AudioStreamWAV:
-	var stream = AudioStreamWAV.new()
-	stream.format = AudioStreamWAV.FORMAT_16_BITS
-	stream.mix_rate = mix_rate
-	stream.stereo = false
-	stream.loop_mode = AudioStreamWAV.LOOP_DISABLED
-	
-	var data = PackedByteArray()
-	var total_samples = int(mix_rate * duration)
-	data.resize(total_samples * 2)
-	
-	for i in range(total_samples):
-		var t = float(i) / float(mix_rate)
-		# Scream: Loud harsh saw wave mixed with high volume white noise, fading exponentially
-		var wave = (fmod(t * 400.0, 1.0) - 0.5) * 0.4 + (fmod(t * 230.0, 1.0) - 0.5) * 0.3
-		var noise = randf() - 0.5
-		var val = wave + noise * 0.6
-		
-		# Exponential decay
-		var decay = exp(-t * 2.5)
-		val *= decay * 0.95
-		
-		var int_val = clampi(int(val * 32767.0), -32768, 32767)
-		data[i * 2] = int_val & 0xFF
-		data[i * 2 + 1] = (int_val >> 8) & 0xFF
-		
-	stream.data = data
-	return stream
 
 func set_safe_mode(is_safe: bool):
 	if is_safe:
@@ -355,90 +220,4 @@ func play_drink():
 	sfx_player.volume_db = 5.0
 	sfx_player.play()
 
-func generate_safe_ambient(mix_rate: int, duration: float) -> AudioStreamWAV:
-	var stream = AudioStreamWAV.new()
-	stream.format = AudioStreamWAV.FORMAT_16_BITS
-	stream.mix_rate = mix_rate
-	stream.stereo = false
-	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
-	stream.loop_end = int(mix_rate * duration)
-	var data = PackedByteArray()
-	var total_samples = int(mix_rate * duration)
-	data.resize(total_samples * 2)
-	for i in range(total_samples):
-		var t = float(i) / float(mix_rate)
-		var phase = fmod(t / duration, 1.0)
-		var base_freq = 261.63
-		if phase > 0.5: base_freq = 220.0
-		var f1 = base_freq
-		var f2 = base_freq * 1.25
-		var f3 = base_freq * 1.5
-		if phase > 0.5: f2 = base_freq * 1.189
-		var val = 0.0
-		val += (sin(t * f1 * TAU) + 0.1 * sin(t * f1 * 2 * TAU)) * 0.3
-		val += (sin(t * f2 * TAU) + 0.1 * sin(t * f2 * 2 * TAU)) * 0.25
-		val += (sin(t * f3 * TAU) + 0.1 * sin(t * f3 * 2 * TAU)) * 0.2
-		val *= 0.8 + 0.2 * sin(t * 0.5 * TAU)
-		var fade = 1.0
-		if i < 2000: fade = float(i) / 2000.0
-		elif i > total_samples - 2000: fade = float(total_samples - i) / 2000.0
-		val *= fade
-		var int_val = clampi(int(val * 32767.0), -32768, 32767)
-		data[i * 2] = int_val & 0xFF
-		data[i * 2 + 1] = (int_val >> 8) & 0xFF
-	stream.data = data
-	return stream
 
-func generate_door_sound(mix_rate: int, duration: float, is_open: bool) -> AudioStreamWAV:
-	var stream = AudioStreamWAV.new()
-	stream.format = AudioStreamWAV.FORMAT_16_BITS
-	stream.mix_rate = mix_rate
-	stream.stereo = false
-	stream.loop_mode = AudioStreamWAV.LOOP_DISABLED
-	var data = PackedByteArray()
-	var total_samples = int(mix_rate * duration)
-	data.resize(total_samples * 2)
-	for i in range(total_samples):
-		var t = float(i) / float(mix_rate)
-		var val = 0.0
-		if is_open:
-			var base_freq = 300.0 + 100.0 * sin(t * 3.0)
-			var creak1 = sin(t * base_freq * TAU) * exp(-t * 1.5)
-			var creak2 = sin(t * (base_freq * 1.5) * TAU) * exp(-t * 2.0)
-			var noise = (randf() - 0.5) * 0.2
-			val = (creak1 + creak2 * 0.5 + noise) * 0.6
-		else:
-			if t < 0.15:
-				var freq = lerp(120.0, 40.0, t / 0.15)
-				val = sin(t * freq * TAU) * exp(-t * 20.0) * 1.5
-				val += (randf() - 0.5) * exp(-t * 30.0) * 0.5
-			elif t > 0.2 and t < 0.25:
-				var click_t = t - 0.2
-				val = sin(click_t * 800.0 * TAU) * exp(-click_t * 50.0) * 0.8
-		var int_val = clampi(int(val * 32767.0), -32768, 32767)
-		data[i * 2] = int_val & 0xFF
-		data[i * 2 + 1] = (int_val >> 8) & 0xFF
-	stream.data = data
-	return stream
-
-func generate_drink_sound(mix_rate: int, duration: float) -> AudioStreamWAV:
-	var stream = AudioStreamWAV.new()
-	stream.format = AudioStreamWAV.FORMAT_16_BITS
-	stream.mix_rate = mix_rate
-	stream.stereo = false
-	stream.loop_mode = AudioStreamWAV.LOOP_DISABLED
-	var data = PackedByteArray()
-	var total_samples = int(mix_rate * duration)
-	data.resize(total_samples * 2)
-	for i in range(total_samples):
-		var t = float(i) / float(mix_rate)
-		var val = 0.0
-		if t < 0.2:
-			val = (randf() - 0.5) * exp(-t * 20.0) * 0.5
-		elif t > 0.4 and t < 0.7:
-			val = sin(t * 400.0 * TAU) * exp(-(t-0.4) * 10.0) * 0.3
-		var int_val = clampi(int(val * 32767.0), -32768, 32767)
-		data[i * 2] = int_val & 0xFF
-		data[i * 2 + 1] = (int_val >> 8) & 0xFF
-	stream.data = data
-	return stream

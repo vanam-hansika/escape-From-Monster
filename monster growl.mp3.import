@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://u1kkpaype5ty"
+path="res://.godot/imported/monster growl.mp3-4389659242b665617f2f5f32fdb13a02.mp3str"
+
+[deps]
+
+source_file="res://monster growl.mp3"
+dest_files=["res://.godot/imported/monster growl.mp3-4389659242b665617f2f5f32fdb13a02.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4
