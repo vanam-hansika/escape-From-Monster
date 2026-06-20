@@ -25,6 +25,13 @@ var mobile_movement_vector: Vector2 = Vector2.ZERO
 var mobile_sprint_active: bool = false
 
 var is_safe: bool = false
+var drink_cooldown: float = 0.0
+
+func can_drink() -> bool:
+	return drink_cooldown <= 0.0
+
+func start_drink_cooldown():
+	drink_cooldown = 2.0
 
 func drink_consumable():
 	if stamina:
@@ -83,6 +90,9 @@ func _unhandled_input(event):
 		sway_target_rot.x = clamp(-event.relative.y * 0.08, -0.4, 0.4)
 
 func _physics_process(delta):
+	if drink_cooldown > 0.0:
+		drink_cooldown -= delta
+
 	if not can_move:
 		return
 

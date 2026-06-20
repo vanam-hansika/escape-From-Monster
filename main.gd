@@ -28,7 +28,6 @@ var maze_grid = [
 ]
 
 var safe_room_scene = preload("res://safe_room.tscn")
-var consumable_scene = preload("res://consumable.tscn")
 
 func _ready():
 	# 1. Generate Floor
@@ -53,13 +52,7 @@ func _ready():
 				else:
 					safe_inst.rotation.y = 0.0
 				nav_region.add_child(safe_inst)
-				
-				# Spawn consumable in the safe room
-				var cons_inst = consumable_scene.instantiate()
-				# Alternate between water (0) and booster (1)
-				cons_inst.consumable_type = 0 if maze_grid[r][c] == 2 else 1
-				cons_inst.position = safe_pos + Vector3(0, 0, 0)
-				nav_region.add_child(cons_inst)
+
 				
 	# 3. Position Player, Monster, and Exit Door
 	player.global_position = cell_to_world(Vector2i(1, 1), 0.2)
