@@ -11,6 +11,7 @@ var safe_ambient_player: AudioStreamPlayer
 var wind_player: AudioStreamPlayer
 var heartbeat_player: AudioStreamPlayer
 var sfx_player: AudioStreamPlayer
+var growl_player: AudioStreamPlayer
 
 var heartbeat_timer: float = 0.0
 
@@ -42,6 +43,10 @@ func _ready():
 	sfx_player.name = "SFXPlayer"
 	add_child(sfx_player)
 	
+	growl_player = AudioStreamPlayer.new()
+	growl_player.name = "GrowlPlayer"
+	add_child(growl_player)
+	
 	# Generate and set streams
 	generate_audio_streams()
 	
@@ -62,6 +67,22 @@ func _physics_process(delta):
 			
 	if not player or not monster:
 		return
+		
+	# Handle monster chase sound fading
+	var monster_is_chasing = false
+	if is_instance_valid(monster) and "current_state" in monster:
+		if monster.current_state == "CHASE" and is_instance_valid(player) and not player.is_safe:
+			monster_is_chasing = true
+			
+	if monster_is_chasing:
+		if not growl_player.playing:
+			growl_player.play()
+		growl_player.volume_db = lerp(growl_player.volume_db, 0.0, delta * 3.0)
+	else:
+		if growl_player.playing:
+			growl_player.volume_db = lerp(growl_player.volume_db, -80.0, delta * 3.0)
+			if growl_player.volume_db < -70.0:
+				growl_player.stop()
 		
 	# Dynamic heartbeat speed based on distance
 	var dist = player.global_position.distance_to(monster.global_position)
@@ -86,25 +107,45 @@ func play_jumpscare():
 	ambient_player.stop()
 	wind_player.stop()
 	heartbeat_player.stop()
+	if growl_player:
+		growl_player.stop()
 	
 	sfx_player.stream = jumpscare_stream
 	sfx_player.volume_db = 15.0
 	sfx_player.play()
 
-var jumpscare_stream: AudioStreamWAV
-var door_open_stream: AudioStreamWAV
-var door_close_stream: AudioStreamWAV
-var drink_stream: AudioStreamWAV
+var jumpscare_stream: AudioStream
+var door_open_stream: AudioStream
+var door_close_stream: AudioStream
+var drink_stream: AudioStream
 
 func generate_audio_streams():
 	# Generate low drone for ambient
 	ambient_player.stream = generate_drone(22050, 4.0)
 	ambient_player.volume_db = -10.0
 
-	safe_ambient_player.stream = generate_safe_ambient(22050, 4.0)
+	var peaceful_music_stream = load("res://peaceful music.mp3")
+	if peaceful_music_stream:
+		peaceful_music_stream.loop = true
+		safe_ambient_player.stream = peaceful_music_stream
+	else:
+		safe_ambient_player.stream = generate_safe_ambient(22050, 4.0)
 	safe_ambient_player.volume_db = -80.0
-	door_open_stream = generate_door_sound(22050, 1.0, true)
-	door_close_stream = generate_door_sound(22050, 1.0, false)
+	
+	var slide_door_s = load("res://sliding door opening sound.mp3")
+	if slide_door_s:
+		door_open_stream = slide_door_s
+		door_close_stream = slide_door_s
+	else:
+		door_open_stream = generate_door_sound(22050, 1.0, true)
+		door_close_stream = generate_door_sound(22050, 1.0, false)
+		
+	var growl_s = load("res://monster growl.mp3")
+	if growl_s:
+		growl_s.loop = true
+		growl_player.stream = growl_s
+		growl_player.volume_db = -80.0
+		
 	drink_stream = generate_drink_sound(22050, 1.5)
 	
 	# Generate wind noise
