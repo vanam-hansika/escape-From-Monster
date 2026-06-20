@@ -7,7 +7,6 @@ var player: CharacterBody3D
 var monster: CharacterBody3D
 
 var safe_ambient_player: AudioStreamPlayer
-var heartbeat_player: AudioStreamPlayer
 var footstep_player: AudioStreamPlayer
 var sfx_player: AudioStreamPlayer
 var growl_player: AudioStreamPlayer
@@ -29,10 +28,6 @@ func _ready():
 	footstep_player = AudioStreamPlayer.new()
 	footstep_player.name = "FootstepPlayer"
 	add_child(footstep_player)
-	
-	heartbeat_player = AudioStreamPlayer.new()
-	heartbeat_player.name = "HeartbeatPlayer"
-	add_child(heartbeat_player)
 	
 	sfx_player = AudioStreamPlayer.new()
 	sfx_player.name = "SFXPlayer"
@@ -68,18 +63,16 @@ func _physics_process(delta):
 		if not growl_player.playing:
 			growl_player.play()
 		growl_player.volume_db = lerp(growl_player.volume_db, 0.0, delta * 3.0)
-		# STOP footsteps and heartbeat during chase
+		# STOP horror walking sound during chase
 		if footstep_player.playing:
 			footstep_player.stop()
-		if heartbeat_player.playing:
-			heartbeat_player.stop()
 	else:
 		if growl_player.playing:
 			growl_player.volume_db = lerp(growl_player.volume_db, -80.0, delta * 3.0)
 			if growl_player.volume_db < -70.0:
 				growl_player.stop()
 	
-	# === FOOTSTEP SOUND (only when walking, not during chase) ===
+	# === HORROR WALKING SOUND (only when walking, not during chase) ===
 	if is_instance_valid(player) and not monster_is_chasing and not player.is_safe:
 		var horizontal_vel = Vector2(player.velocity.x, player.velocity.z)
 		var is_walking = horizontal_vel.length() > 0.5 and player.is_on_floor()
@@ -87,42 +80,17 @@ func _physics_process(delta):
 		if is_walking:
 			if not footstep_player.playing:
 				footstep_player.play()
-			# Louder when sprinting
-			if player.is_sprinting:
-				footstep_player.volume_db = lerp(footstep_player.volume_db, 2.0, delta * 5.0)
-			else:
-				footstep_player.volume_db = lerp(footstep_player.volume_db, -5.0, delta * 5.0)
+			footstep_player.volume_db = lerp(footstep_player.volume_db, 0.0, delta * 5.0)
 		else:
 			if footstep_player.playing:
 				footstep_player.stop()
 	elif player.is_safe:
 		if footstep_player.playing:
 			footstep_player.stop()
-	
-	# === HEARTBEAT SOUND (when monster is nearby, not during chase) ===
-	var dist = player.global_position.distance_to(monster.global_position)
-	
-	if not monster_is_chasing and not player.is_safe and dist < 25.0:
-		if not heartbeat_player.playing:
-			heartbeat_player.play()
-		# Volume increases as monster gets closer (louder overall)
-		var t = clamp(dist / 25.0, 0.0, 1.0)
-		var target_vol = lerp(18.0, 0.0, t)
-		heartbeat_player.volume_db = lerp(heartbeat_player.volume_db, target_vol, delta * 3.0)
-		# Speed up playback when monster is very close
-		var target_pitch = lerp(1.5, 0.8, t)
-		heartbeat_player.pitch_scale = lerp(heartbeat_player.pitch_scale, target_pitch, delta * 3.0)
-	else:
-		if heartbeat_player.playing:
-			heartbeat_player.volume_db = lerp(heartbeat_player.volume_db, -80.0, delta * 5.0)
-			if heartbeat_player.volume_db < -70.0:
-				heartbeat_player.stop()
-				heartbeat_player.pitch_scale = 1.0
 
 func play_jumpscare():
 	# Stop everything and play jumpscare
 	footstep_player.stop()
-	heartbeat_player.stop()
 	if growl_player:
 		growl_player.stop()
 	safe_ambient_player.stop()
@@ -134,7 +102,6 @@ func play_jumpscare():
 func play_win():
 	# Stop everything and play winning sound
 	footstep_player.stop()
-	heartbeat_player.stop()
 	safe_ambient_player.stop()
 	if growl_player:
 		growl_player.stop()
@@ -150,12 +117,12 @@ var drink_stream: AudioStream
 var win_stream: AudioStream
 
 func generate_audio_streams():
-	# Footstep sound (looping)
-	var footstep_s = load("res://foot_steps.mp3")
-	if footstep_s:
-		footstep_s.loop = true
-		footstep_player.stream = footstep_s
-		footstep_player.volume_db = -5.0
+	# Horror walking sound (looping)
+	var horror_s = load("res://horror_sound.mp3")
+	if horror_s:
+		horror_s.loop = true
+		footstep_player.stream = horror_s
+		footstep_player.volume_db = 0.0
 
 	# Peaceful music for safe room
 	var peaceful_music_stream = load("res://peaceful music.mp3")
@@ -176,13 +143,6 @@ func generate_audio_streams():
 		growl_s.loop = true
 		growl_player.stream = growl_s
 		growl_player.volume_db = -80.0
-	
-	# Heartbeat sound (looping)
-	var heartbeat_s = load("res://heartbeat.mp3")
-	if heartbeat_s:
-		heartbeat_s.loop = true
-		heartbeat_player.stream = heartbeat_s
-		heartbeat_player.volume_db = -80.0
 		
 	# Drink sound
 	drink_stream = load("res://drink_sound.wav")
