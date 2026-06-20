@@ -6,14 +6,12 @@ extends Node
 var player: CharacterBody3D
 var monster: CharacterBody3D
 
-var ambient_player: AudioStreamPlayer
 var safe_ambient_player: AudioStreamPlayer
-var wind_player: AudioStreamPlayer
 var heartbeat_player: AudioStreamPlayer
+var footstep_player: AudioStreamPlayer
 var sfx_player: AudioStreamPlayer
 var growl_player: AudioStreamPlayer
 
-var heartbeat_timer: float = 0.0
 var ambient_base_vol: float = -10.0
 
 func _ready():
@@ -24,17 +22,13 @@ func _ready():
 		monster = get_node(monster_path)
 		
 	# Create audio players
-	ambient_player = AudioStreamPlayer.new()
-	ambient_player.name = "AmbientPlayer"
-	add_child(ambient_player)
-
 	safe_ambient_player = AudioStreamPlayer.new()
 	safe_ambient_player.name = "SafeAmbientPlayer"
 	add_child(safe_ambient_player)
 	
-	wind_player = AudioStreamPlayer.new()
-	wind_player.name = "WindPlayer"
-	add_child(wind_player)
+	footstep_player = AudioStreamPlayer.new()
+	footstep_player.name = "FootstepPlayer"
+	add_child(footstep_player)
 	
 	heartbeat_player = AudioStreamPlayer.new()
 	heartbeat_player.name = "HeartbeatPlayer"
@@ -48,18 +42,7 @@ func _ready():
 	growl_player.name = "GrowlPlayer"
 	add_child(growl_player)
 	
-	# Defer stream generation so heavy processing runs AFTER scene loads completely
-	# This prevents startup crashes on low-RAM Android devices
 	call_deferred("generate_audio_streams")
-	call_deferred("_start_ambient_after_load")
-
-func _start_ambient_after_load():
-	await get_tree().create_timer(0.3).timeout
-	if ambient_player.stream:
-		ambient_player.play()
-	if wind_player.stream:
-		wind_player.play()
-
 
 func _physics_process(delta):
 	# Fallbacks to find player and monster in groups
@@ -74,8 +57,8 @@ func _physics_process(delta):
 			
 	if not player or not monster:
 		return
-		
-	# Handle monster chase sound fading
+	
+	# === MONSTER CHASE GROWL ===
 	var monster_is_chasing = false
 	if is_instance_valid(monster) and "current_state" in monster:
 		if monster.current_state == "CHASE" and is_instance_valid(player) and not player.is_safe:
@@ -85,57 +68,72 @@ func _physics_process(delta):
 		if not growl_player.playing:
 			growl_player.play()
 		growl_player.volume_db = lerp(growl_player.volume_db, 0.0, delta * 3.0)
+		# STOP footsteps and heartbeat during chase
+		if footstep_player.playing:
+			footstep_player.stop()
+		if heartbeat_player.playing:
+			heartbeat_player.stop()
 	else:
 		if growl_player.playing:
 			growl_player.volume_db = lerp(growl_player.volume_db, -80.0, delta * 3.0)
 			if growl_player.volume_db < -70.0:
 				growl_player.stop()
+	
+	# === FOOTSTEP SOUND (only when walking, not during chase) ===
+	if is_instance_valid(player) and not monster_is_chasing and not player.is_safe:
+		var horizontal_vel = Vector2(player.velocity.x, player.velocity.z)
+		var is_walking = horizontal_vel.length() > 0.5 and player.is_on_floor()
 		
-	# Dynamic heartbeat speed based on distance
+		if is_walking:
+			if not footstep_player.playing:
+				footstep_player.play()
+			# Louder when sprinting
+			if player.is_sprinting:
+				footstep_player.volume_db = lerp(footstep_player.volume_db, 2.0, delta * 5.0)
+			else:
+				footstep_player.volume_db = lerp(footstep_player.volume_db, -5.0, delta * 5.0)
+		else:
+			if footstep_player.playing:
+				footstep_player.stop()
+	elif player.is_safe:
+		if footstep_player.playing:
+			footstep_player.stop()
+	
+	# === HEARTBEAT SOUND (when monster is nearby, not during chase) ===
 	var dist = player.global_position.distance_to(monster.global_position)
 	
-	# Calculate ambient music volume with monster proximity boost
-	var target_ambient_vol = ambient_base_vol
-	if ambient_base_vol > -40.0: # Only if not in safe room
-		if dist < 20.0:
-			var t_near = clamp(dist / 20.0, 0.0, 1.0)
-			# volume goes from 5.0 dB (intense/loud) when right next to player, to -10.0 dB (normal) when far
-			target_ambient_vol = lerp(5.0, -10.0, t_near)
-	
-	# Smoothly transition the ambient player volume
-	ambient_player.volume_db = lerp(ambient_player.volume_db, target_ambient_vol, delta * 3.0)
-	
-	if dist > 35.0:
-		# Too far, no heartbeat
-		pass
-	else:
-		# Distance 0 to 35
-		var t = clamp((dist - 3.0) / 32.0, 0.0, 1.0)
-		var heartbeat_interval = lerp(0.45, 1.5, t)
-		var volume = lerp(15.0, -5.0, t) # dB
-		
-		heartbeat_timer += delta
-		if heartbeat_timer >= heartbeat_interval:
-			heartbeat_timer = 0.0
-			heartbeat_player.volume_db = volume
+	if not monster_is_chasing and not player.is_safe and dist < 25.0:
+		if not heartbeat_player.playing:
 			heartbeat_player.play()
+		# Volume increases as monster gets closer
+		var t = clamp(dist / 25.0, 0.0, 1.0)
+		var target_vol = lerp(5.0, -15.0, t)
+		heartbeat_player.volume_db = lerp(heartbeat_player.volume_db, target_vol, delta * 3.0)
+		# Speed up playback when monster is very close
+		var target_pitch = lerp(1.5, 0.8, t)
+		heartbeat_player.pitch_scale = lerp(heartbeat_player.pitch_scale, target_pitch, delta * 3.0)
+	else:
+		if heartbeat_player.playing:
+			heartbeat_player.volume_db = lerp(heartbeat_player.volume_db, -80.0, delta * 5.0)
+			if heartbeat_player.volume_db < -70.0:
+				heartbeat_player.stop()
+				heartbeat_player.pitch_scale = 1.0
 
 func play_jumpscare():
-	# Stop background sounds and play loud jumpscare
-	ambient_player.stop()
-	wind_player.stop()
+	# Stop everything and play jumpscare
+	footstep_player.stop()
 	heartbeat_player.stop()
 	if growl_player:
 		growl_player.stop()
+	safe_ambient_player.stop()
 	
 	sfx_player.stream = jumpscare_stream
 	sfx_player.volume_db = 15.0
 	sfx_player.play()
 
 func play_win():
-	# Stop background sounds and play winning sound
-	ambient_player.stop()
-	wind_player.stop()
+	# Stop everything and play winning sound
+	footstep_player.stop()
 	heartbeat_player.stop()
 	safe_ambient_player.stop()
 	if growl_player:
@@ -152,49 +150,57 @@ var drink_stream: AudioStream
 var win_stream: AudioStream
 
 func generate_audio_streams():
-	ambient_player.stream = load("res://ambient_drone.wav")
-	ambient_player.volume_db = -10.0
+	# Footstep sound (looping)
+	var footstep_s = load("res://foot steps.mp3")
+	if footstep_s:
+		footstep_s.loop = true
+		footstep_player.stream = footstep_s
+		footstep_player.volume_db = -5.0
 
+	# Peaceful music for safe room
 	var peaceful_music_stream = load("res://peaceful music.mp3")
 	if peaceful_music_stream:
 		peaceful_music_stream.loop = true
 		safe_ambient_player.stream = peaceful_music_stream
 	safe_ambient_player.volume_db = -80.0
 	
+	# Door sounds
 	var slide_door_s = load("res://sliding door opening sound.mp3")
 	if slide_door_s:
 		door_open_stream = slide_door_s
 		door_close_stream = slide_door_s
 		
+	# Monster growl
 	var growl_s = load("res://monster growl.mp3")
 	if growl_s:
 		growl_s.loop = true
 		growl_player.stream = growl_s
 		growl_player.volume_db = -80.0
+	
+	# Heartbeat sound (looping)
+	var heartbeat_s = load("res://heartbeat.mp3")
+	if heartbeat_s:
+		heartbeat_s.loop = true
+		heartbeat_player.stream = heartbeat_s
+		heartbeat_player.volume_db = -80.0
 		
+	# Drink sound
 	drink_stream = load("res://drink_sound.wav")
 	
+	# Win sound
 	var win_s = load("res://wiining sound.mp3")
 	if win_s:
 		win_stream = win_s
 	
-	wind_player.stream = load("res://wind_noise.wav")
-	wind_player.volume_db = -18.0
-	
-	heartbeat_player.stream = load("res://heartbeat.wav")
-	
+	# Jumpscare scream
 	jumpscare_stream = load("res://jumpscare_scream.wav")
 
 
 func set_safe_mode(is_safe: bool):
 	if is_safe:
-		ambient_base_vol = -80.0
-		create_tween().tween_property(wind_player, "volume_db", -80.0, 2.0)
 		create_tween().tween_property(safe_ambient_player, "volume_db", -5.0, 2.0)
 		safe_ambient_player.play()
 	else:
-		ambient_base_vol = -10.0
-		create_tween().tween_property(wind_player, "volume_db", -18.0, 2.0)
 		create_tween().tween_property(safe_ambient_player, "volume_db", -80.0, 2.0)
 
 var _door_sound_cooldown: float = 0.0
@@ -223,5 +229,3 @@ func play_drink():
 	sfx_player.stream = drink_stream
 	sfx_player.volume_db = 5.0
 	sfx_player.play()
-
-
