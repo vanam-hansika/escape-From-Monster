@@ -158,8 +158,10 @@ func generate_audio_streams():
 	if ui and ui.has_method("custom_log"): ui.custom_log("LOG: Loading audio streams...")
 	
 	ambient_player.stream = load("res://ambient_drone.wav")
+	if ambient_player.stream:
+		ambient_player.stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
 	ambient_player.volume_db = -10.0
-	if ui and ui.has_method("custom_log"): ui.custom_log("LOG: Ambient drone loaded successfully")
+	if ui and ui.has_method("custom_log"): ui.custom_log("LOG: Ambient drone loaded and looping enabled")
 
 	var peaceful_music_stream = load("res://peaceful music.mp3")
 	if peaceful_music_stream:
@@ -185,8 +187,10 @@ func generate_audio_streams():
 		win_stream = win_s
 	
 	wind_player.stream = load("res://wind_noise.wav")
+	if wind_player.stream:
+		wind_player.stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
 	wind_player.volume_db = -18.0
-	if ui and ui.has_method("custom_log"): ui.custom_log("LOG: Wind noise loaded successfully")
+	if ui and ui.has_method("custom_log"): ui.custom_log("LOG: Wind noise loaded and looping enabled")
 	
 	heartbeat_player.stream = load("res://heartbeat.wav")
 	
