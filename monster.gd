@@ -37,41 +37,32 @@ func _ready():
 		get_node("MeshInstance3D").queue_free()
 		
 	# Load the requested custom devil image safely
-	var tex = load("res://custom_devil.jpg")
+	var tex = load("res://custom_devil.png")
 	
 	if tex:
 		var mesh_inst = MeshInstance3D.new()
+		mesh_inst.name = "MeshInstance3D"
 		var quad = QuadMesh.new()
 		var aspect = float(tex.get_width()) / float(tex.get_height())
 		quad.size = Vector2(2.6 * aspect, 2.6) # Slightly larger and more solid
 		mesh_inst.mesh = quad
 		mesh_inst.position = Vector3(0, 1.3, 0)
 		
-		# Custom shader to remove dark background
-		var mat = ShaderMaterial.new()
-		var shader = Shader.new()
-		shader.code = """
-shader_type spatial;
-render_mode blend_mix, depth_draw_opaque, cull_disabled;
-uniform sampler2D tex : source_color;
-
-void fragment() {
-	vec4 col = texture(tex, UV);
-	float luma = dot(col.rgb, vec3(0.299, 0.587, 0.114));
-	// Very low threshold to not accidentally cut off dark parts of the monster
-	if (luma < 0.02) {
-		discard;
-	}
-	ALBEDO = col.rgb;
-	// Add slight emission so it's never completely pitch black
-	EMISSION = col.rgb * 0.15;
-	// Realistic fleshy shading, removed fake normals to prevent half-black lighting issues
-	ROUGHNESS = 0.6;
-	METALLIC = 0.1;
-}
-"""
-		mat.shader = shader
-		mat.set_shader_parameter("tex", tex)
+		# Standard material with transparent PNG support (highly compatible with mobile/Compatibility renderer)
+		var mat = StandardMaterial3D.new()
+		mat.albedo_texture = tex
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+		
+		# Add slight emission so it's never completely pitch black
+		mat.emission_enabled = true
+		mat.emission = Color(0.15, 0.15, 0.15)
+		mat.emission_operator = StandardMaterial3D.EMISSION_OP_MULTIPLY
+		mat.emission_texture = tex
+		
+		mat.roughness = 0.6
+		mat.metallic = 0.1
+		
 		mesh_inst.material_override = mat
 		add_child(mesh_inst)
 		
