@@ -1,4 +1,4 @@
-extends Node3D
+﻿extends Node3D
 
 @onready var door_body = $DoorBody
 @onready var audio_manager = get_tree().current_scene.get_node_or_null("AudioManager")

@@ -1,7 +1,8 @@
-[gd_scene load_steps=15 format=3]
+﻿[gd_scene load_steps=16 format=3]
 
 [ext_resource type="Script" path="res://safe_room.gd" id="1_scr"]
 [ext_resource type="PackedScene" path="res://water_bottle.tscn" id="2_bottle"]
+[ext_resource type="PackedScene" path="res://red_can.tscn" id="3_red_can"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_door"]
 size = Vector3(4.0, 3.0, 0.2)
@@ -122,8 +123,8 @@ material_override = SubResource("StandardMaterial3D_shelf")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Shelf"]
 shape = SubResource("BoxShape3D_shelf")
 
-[node name="WaterBottle1" parent="Shelf" instance=ExtResource("2_bottle")]
+[node name="WaterBottle" parent="Shelf" instance=ExtResource("2_bottle")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0.2, 0)
 
-[node name="WaterBottle2" parent="Shelf" instance=ExtResource("2_bottle")]
+[node name="RedCan" parent="Shelf" instance=ExtResource("3_red_can")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.2, 0)

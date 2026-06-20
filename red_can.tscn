@@ -1,6 +1,6 @@
 ﻿[gd_scene load_steps=5 format=3]
 
-[ext_resource type="Script" path="res://water_bottle.gd" id="1_scr"]
+[ext_resource type="Script" path="res://red_can.gd" id="1_scr"]
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_bottle"]
 top_radius = 0.05
@@ -8,7 +8,7 @@ bottom_radius = 0.05
 height = 0.25
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_bottle"]
-albedo_color = Color(0.2, 0.5, 1, 1)
+albedo_color = Color(1, 0.2, 0.2, 1)
 metallic = 0.5
 roughness = 0.2
 
@@ -16,7 +16,7 @@ roughness = 0.2
 radius = 0.3
 height = 0.5
 
-[node name="WaterBottle" type="Area3D"]
+[node name="RedCan" type="Area3D"]
 script = ExtResource("1_scr")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
