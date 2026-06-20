@@ -12,7 +12,7 @@ dest_files=["res://.godot/imported/foot steps.mp3-90e194a49a660a9be8c3160fda1edb
 
 [params]
 
-loop=false
+loop=true
 loop_offset=0
 bpm=0
 beat_count=0

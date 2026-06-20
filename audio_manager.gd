@@ -105,9 +105,9 @@ func _physics_process(delta):
 	if not monster_is_chasing and not player.is_safe and dist < 25.0:
 		if not heartbeat_player.playing:
 			heartbeat_player.play()
-		# Volume increases as monster gets closer
+		# Volume increases as monster gets closer (louder overall)
 		var t = clamp(dist / 25.0, 0.0, 1.0)
-		var target_vol = lerp(5.0, -15.0, t)
+		var target_vol = lerp(18.0, 0.0, t)
 		heartbeat_player.volume_db = lerp(heartbeat_player.volume_db, target_vol, delta * 3.0)
 		# Speed up playback when monster is very close
 		var target_pitch = lerp(1.5, 0.8, t)
