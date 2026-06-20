@@ -67,13 +67,22 @@ func _ready():
 	nav_mesh.agent_height = 2.0
 	nav_mesh.agent_radius = 0.8
 	nav_mesh.agent_max_slope = 45.0
+	nav_mesh.geometry_parsed_geometry_type = NavigationMesh.PARSED_GEOMETRY_STATIC_COLLIDERS
 	nav_region.navigation_mesh = nav_mesh
 	
 	# Call bake (needs to be deferred slightly to allow nodes to enter tree completely)
 	call_deferred("bake_nav")
 
 func bake_nav():
+	print("LOG: Starting navigation mesh baking...")
+	if not nav_region:
+		print("LOG: Error - nav_region is null!")
+		return
+	if not nav_region.navigation_mesh:
+		print("LOG: Error - navigation_mesh is null!")
+		return
 	nav_region.bake_navigation_mesh(false)
+	print("LOG: Navigation mesh baking completed successfully!")
 	# Force the monster to start moving immediately after baking is complete!
 	if monster:
 		monster.set_physics_process(true)
