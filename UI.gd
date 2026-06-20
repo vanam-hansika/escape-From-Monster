@@ -27,47 +27,8 @@ func _ready():
 		$HUD/PauseToggleButton.pressed.connect(toggle_pause)
 	
 	setup_mobile_controls()
-	setup_debug_console()
 	call_deferred("find_player")
 
-var debug_label: Label = null
-var debug_scroll: ScrollContainer = null
-var log_lines: Array = []
-
-func setup_debug_console():
-	var canvas = CanvasLayer.new()
-	canvas.layer = 100
-	add_child(canvas)
-	
-	debug_scroll = ScrollContainer.new()
-	debug_scroll.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
-	debug_scroll.size = Vector2(400, 300)
-	debug_scroll.position = Vector2(10, 80)
-	debug_scroll.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	canvas.add_child(debug_scroll)
-	
-	debug_label = Label.new()
-	debug_label.text = "DEBUG CONSOLE LOADED...\n"
-	debug_label.add_theme_font_size_override("font_size", 12)
-	debug_label.add_theme_color_override("font_color", Color.GREEN)
-	debug_label.add_theme_color_override("font_outline_color", Color.BLACK)
-	debug_label.add_theme_constant_override("outline_size", 4)
-	debug_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	debug_scroll.add_child(debug_label)
-	
-	custom_log("System initialized on: " + OS.get_name())
-
-
-func custom_log(text: String):
-	log_lines.append(text)
-	if log_lines.size() > 40:
-		log_lines.remove_at(0)
-	if debug_label:
-		debug_label.text = "\n".join(log_lines)
-		# Scroll to bottom
-		await get_tree().process_frame
-		if debug_scroll:
-			debug_scroll.scroll_vertical = 99999
 
 
 var hand_sway_time = 0.0

@@ -55,11 +55,19 @@ func _ready():
 
 func _start_ambient_after_load():
 	await get_tree().create_timer(0.3).timeout
-	var ui = get_tree().current_scene.get_node_or_null("UI")
-	if ui and ui.has_method("custom_log"): ui.custom_log("LOG: Ambient & wind start play requested")
 	if ambient_player.stream:
+		ambient_player.finished.connect(_on_ambient_finished)
 		ambient_player.play()
 	if wind_player.stream:
+		wind_player.finished.connect(_on_wind_finished)
+		wind_player.play()
+
+func _on_ambient_finished():
+	if ambient_player and is_instance_valid(ambient_player):
+		ambient_player.play()
+
+func _on_wind_finished():
+	if wind_player and is_instance_valid(wind_player):
 		wind_player.play()
 
 
@@ -154,14 +162,8 @@ var drink_stream: AudioStream
 var win_stream: AudioStream
 
 func generate_audio_streams():
-	var ui = get_tree().current_scene.get_node_or_null("UI")
-	if ui and ui.has_method("custom_log"): ui.custom_log("LOG: Loading audio streams...")
-	
 	ambient_player.stream = load("res://ambient_drone.wav")
-	if ambient_player.stream:
-		ambient_player.stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
 	ambient_player.volume_db = -10.0
-	if ui and ui.has_method("custom_log"): ui.custom_log("LOG: Ambient drone loaded and looping enabled")
 
 	var peaceful_music_stream = load("res://peaceful music.mp3")
 	if peaceful_music_stream:
@@ -187,15 +189,11 @@ func generate_audio_streams():
 		win_stream = win_s
 	
 	wind_player.stream = load("res://wind_noise.wav")
-	if wind_player.stream:
-		wind_player.stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
 	wind_player.volume_db = -18.0
-	if ui and ui.has_method("custom_log"): ui.custom_log("LOG: Wind noise loaded and looping enabled")
 	
 	heartbeat_player.stream = load("res://heartbeat.wav")
 	
 	jumpscare_stream = load("res://jumpscare_scream.wav")
-	if ui and ui.has_method("custom_log"): ui.custom_log("LOG: All audio streams loaded successfully!")
 
 
 func set_safe_mode(is_safe: bool):
@@ -209,12 +207,24 @@ func set_safe_mode(is_safe: bool):
 		create_tween().tween_property(wind_player, "volume_db", -18.0, 2.0)
 		create_tween().tween_property(safe_ambient_player, "volume_db", -80.0, 2.0)
 
+var _door_sound_cooldown: float = 0.0
+
+func _process(delta):
+	if _door_sound_cooldown > 0.0:
+		_door_sound_cooldown -= delta
+
 func play_door_open():
+	if _door_sound_cooldown > 0.0:
+		return
+	_door_sound_cooldown = 1.5
 	sfx_player.stream = door_open_stream
 	sfx_player.volume_db = 0.0
 	sfx_player.play()
 
 func play_door_close():
+	if _door_sound_cooldown > 0.0:
+		return
+	_door_sound_cooldown = 1.5
 	sfx_player.stream = door_close_stream
 	sfx_player.volume_db = 0.0
 	sfx_player.play()
