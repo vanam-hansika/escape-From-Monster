@@ -37,11 +37,8 @@ func _ready():
 		get_node("MeshInstance3D").queue_free()
 		
 	# Load the requested custom devil image safely
-	var tex = null
-	var img = Image.new()
-	if img.load("res://custom_devil.jpg") == OK:
-		tex = ImageTexture.create_from_image(img)
-		
+	var tex = load("res://custom_devil.jpg")
+	
 	if tex:
 		var mesh_inst = MeshInstance3D.new()
 		var quad = QuadMesh.new()
@@ -64,16 +61,13 @@ void fragment() {
 	// Very low threshold to not accidentally cut off dark parts of the monster
 	if (luma < 0.02) {
 		discard;
-	} else {
-		ALBEDO = col.rgb;
-		
-		// Add slight emission so it's never completely pitch black
-		EMISSION = col.rgb * 0.15;
-		
-		// Realistic fleshy shading, removed fake normals to prevent half-black lighting issues
-		ROUGHNESS = 0.6;
-		METALLIC = 0.1;
 	}
+	ALBEDO = col.rgb;
+	// Add slight emission so it's never completely pitch black
+	EMISSION = col.rgb * 0.15;
+	// Realistic fleshy shading, removed fake normals to prevent half-black lighting issues
+	ROUGHNESS = 0.6;
+	METALLIC = 0.1;
 }
 """
 		mat.shader = shader
