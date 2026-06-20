@@ -366,3 +366,33 @@ func generate_drink_sound(mix_rate: int, duration: float) -> AudioStreamWAV:
 		data[i * 2 + 1] = (int_val >> 8) & 0xFF
 	stream.data = data
 	return stream
+
+func play_drink():
+	var player = AudioStreamPlayer.new()
+	player.stream = generate_drink_sound(44100, 0.6)
+	player.volume_db = 0.0
+	add_child(player)
+	player.play()
+	player.finished.connect(player.queue_free)
+
+func generate_drink_sound(mix_rate: int, duration: float) -> AudioStreamWAV:
+	var stream = AudioStreamWAV.new()
+	stream.format = AudioStreamWAV.FORMAT_16_BITS
+	stream.mix_rate = mix_rate
+	stream.stereo = false
+	stream.loop_mode = AudioStreamWAV.LOOP_DISABLED
+	var data = PackedByteArray()
+	var total_samples = int(mix_rate * duration)
+	data.resize(total_samples * 2)
+	for i in range(total_samples):
+		var t = float(i) / float(mix_rate)
+		var val = 0.0
+		# Glug sound (low frequency popping)
+		var glug_freq = 15.0
+		var envelope = exp(-t * 3.0)
+		val = sin(t * glug_freq * TAU + sin(t * 100.0) * 0.5) * envelope * 0.8
+		var int_val = clampi(int(val * 32767.0), -32768, 32767)
+		data[i * 2] = int_val & 0xFF
+		data[i * 2 + 1] = (int_val >> 8) & 0xFF
+	stream.data = data
+	return stream

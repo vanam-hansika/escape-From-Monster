@@ -10,6 +10,16 @@ var player = null
 func _ready():
 	$SafeZoneTrigger.body_entered.connect(_on_safe_zone_entered)
 	$SafeZoneTrigger.body_exited.connect(_on_safe_zone_exited)
+	
+	var tex = load("res://wall_texture.png")
+	if tex:
+		var mat = StandardMaterial3D.new()
+		mat.albedo_texture = tex
+		mat.albedo_color = Color(0.8, 0.8, 0.8, 1)
+		mat.uv1_scale = Vector3(1.0, 1.0, 1.0)
+		mat.uv1_triplanar = false
+		mat.roughness = 0.95
+		$DoorBody/MeshInstance3D.material_override = mat
 
 func _process(delta):
 	if not is_instance_valid(player):
@@ -48,7 +58,6 @@ func open_door():
 		audio_manager.play_door_open()
 	if tween: tween.kill()
 	tween = create_tween()
-	# Slide the door to the side (X axis relative) to clear the opening
 	tween.tween_property(door_body, "position:x", 3.8, 0.8).set_trans(Tween.TRANS_SINE)
 
 func close_door():
