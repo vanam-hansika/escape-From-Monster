@@ -48,12 +48,17 @@ func _ready():
 	growl_player.name = "GrowlPlayer"
 	add_child(growl_player)
 	
-	# Generate and set streams
-	generate_audio_streams()
-	
-	# Start ambient sounds
-	ambient_player.play()
-	wind_player.play()
+	# Defer stream generation so heavy processing runs AFTER scene loads completely
+	# This prevents startup crashes on low-RAM Android devices
+	call_deferred("generate_audio_streams")
+	call_deferred("_start_ambient_after_load")
+
+func _start_ambient_after_load():
+	await get_tree().create_timer(0.3).timeout
+	if ambient_player.stream:
+		ambient_player.play()
+	if wind_player.stream:
+		wind_player.play()
 
 func _physics_process(delta):
 	# Fallbacks to find player and monster in groups
