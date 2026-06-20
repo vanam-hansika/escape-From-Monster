@@ -72,19 +72,12 @@ func _physics_process(delta):
 			if growl_player.volume_db < -70.0:
 				growl_player.stop()
 	
-	# === HORROR WALKING SOUND (only when walking, not during chase) ===
+	# === HORROR AMBIENT SOUND (plays continuously, stops during chase/safe room) ===
 	if is_instance_valid(player) and not monster_is_chasing and not player.is_safe:
-		var horizontal_vel = Vector2(player.velocity.x, player.velocity.z)
-		var is_walking = horizontal_vel.length() > 0.5 and player.is_on_floor()
-		
-		if is_walking:
-			if not footstep_player.playing:
-				footstep_player.play()
-			footstep_player.volume_db = lerp(footstep_player.volume_db, 0.0, delta * 5.0)
-		else:
-			if footstep_player.playing:
-				footstep_player.stop()
-	elif player.is_safe:
+		if not footstep_player.playing:
+			footstep_player.play()
+		footstep_player.volume_db = lerp(footstep_player.volume_db, 0.0, delta * 5.0)
+	else:
 		if footstep_player.playing:
 			footstep_player.stop()
 
