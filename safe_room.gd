@@ -11,6 +11,9 @@ func _ready():
 	$SafeZoneTrigger.body_entered.connect(_on_safe_zone_entered)
 	$SafeZoneTrigger.body_exited.connect(_on_safe_zone_exited)
 	
+	$DoorTrigger.body_entered.connect(_on_door_trigger_entered)
+	$DoorTrigger.body_exited.connect(_on_door_trigger_exited)
+	
 	var tex = load("res://wall_texture.png")
 	if tex:
 		var mat = StandardMaterial3D.new()
@@ -21,23 +24,13 @@ func _ready():
 		mat.roughness = 0.95
 		$DoorBody/MeshInstance3D.material_override = mat
 
-func _process(delta):
-	if not is_instance_valid(player):
-		var players = get_tree().get_nodes_in_group("player")
-		if players.size() > 0:
-			player = players[0]
-			
-	if is_instance_valid(player):
-		var door_global_pos = to_global(Vector3(0, 1.5, 2.0))
-		var door_pos_2d = Vector2(door_global_pos.x, door_global_pos.z)
-		var player_pos_2d = Vector2(player.global_position.x, player.global_position.z)
-		
-		var dist = player_pos_2d.distance_to(door_pos_2d)
-		
-		if dist < 1.9:
-			open_door()
-		else:
-			close_door()
+func _on_door_trigger_entered(body):
+	if body.is_in_group("player"):
+		open_door()
+
+func _on_door_trigger_exited(body):
+	if body.is_in_group("player"):
+		close_door()
 
 func _on_safe_zone_entered(body):
 	if body.is_in_group("player"):
