@@ -56,18 +56,8 @@ func _ready():
 func _start_ambient_after_load():
 	await get_tree().create_timer(0.3).timeout
 	if ambient_player.stream:
-		ambient_player.finished.connect(_on_ambient_finished)
 		ambient_player.play()
 	if wind_player.stream:
-		wind_player.finished.connect(_on_wind_finished)
-		wind_player.play()
-
-func _on_ambient_finished():
-	if ambient_player and is_instance_valid(ambient_player):
-		ambient_player.play()
-
-func _on_wind_finished():
-	if wind_player and is_instance_valid(wind_player):
 		wind_player.play()
 
 
