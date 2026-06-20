@@ -201,6 +201,8 @@ func win_game():
 	player.disable_movement()
 	if monster:
 		monster.queue_free()
+	if audio_manager and audio_manager.has_method("play_win"):
+		audio_manager.play_win()
 	ui.show_win()
 
 func game_over_monster():

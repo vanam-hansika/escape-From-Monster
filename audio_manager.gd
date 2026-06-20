@@ -14,6 +14,7 @@ var sfx_player: AudioStreamPlayer
 var growl_player: AudioStreamPlayer
 
 var heartbeat_timer: float = 0.0
+var ambient_base_vol: float = -10.0
 
 func _ready():
 	# Locate player and monster
@@ -87,6 +88,17 @@ func _physics_process(delta):
 	# Dynamic heartbeat speed based on distance
 	var dist = player.global_position.distance_to(monster.global_position)
 	
+	# Calculate ambient music volume with monster proximity boost
+	var target_ambient_vol = ambient_base_vol
+	if ambient_base_vol > -40.0: # Only if not in safe room
+		if dist < 20.0:
+			var t_near = clamp(dist / 20.0, 0.0, 1.0)
+			# volume goes from 5.0 dB (intense/loud) when right next to player, to -10.0 dB (normal) when far
+			target_ambient_vol = lerp(5.0, -10.0, t_near)
+	
+	# Smoothly transition the ambient player volume
+	ambient_player.volume_db = lerp(ambient_player.volume_db, target_ambient_vol, delta * 3.0)
+	
 	if dist > 35.0:
 		# Too far, no heartbeat
 		pass
@@ -114,10 +126,24 @@ func play_jumpscare():
 	sfx_player.volume_db = 15.0
 	sfx_player.play()
 
+func play_win():
+	# Stop background sounds and play winning sound
+	ambient_player.stop()
+	wind_player.stop()
+	heartbeat_player.stop()
+	safe_ambient_player.stop()
+	if growl_player:
+		growl_player.stop()
+		
+	sfx_player.stream = win_stream
+	sfx_player.volume_db = 5.0
+	sfx_player.play()
+
 var jumpscare_stream: AudioStream
 var door_open_stream: AudioStream
 var door_close_stream: AudioStream
 var drink_stream: AudioStream
+var win_stream: AudioStream
 
 func generate_audio_streams():
 	# Generate low drone for ambient
@@ -147,6 +173,10 @@ func generate_audio_streams():
 		growl_player.volume_db = -80.0
 		
 	drink_stream = generate_drink_sound(22050, 1.5)
+	
+	var win_s = load("res://wiining sound.mp3")
+	if win_s:
+		win_stream = win_s
 	
 	# Generate wind noise
 	wind_player.stream = generate_wind(22050, 3.0)
@@ -296,12 +326,12 @@ func generate_screamer(mix_rate: int, duration: float) -> AudioStreamWAV:
 
 func set_safe_mode(is_safe: bool):
 	if is_safe:
-		create_tween().tween_property(ambient_player, "volume_db", -80.0, 2.0)
+		ambient_base_vol = -80.0
 		create_tween().tween_property(wind_player, "volume_db", -80.0, 2.0)
 		create_tween().tween_property(safe_ambient_player, "volume_db", -5.0, 2.0)
 		safe_ambient_player.play()
 	else:
-		create_tween().tween_property(ambient_player, "volume_db", -10.0, 2.0)
+		ambient_base_vol = -10.0
 		create_tween().tween_property(wind_player, "volume_db", -18.0, 2.0)
 		create_tween().tween_property(safe_ambient_player, "volume_db", -80.0, 2.0)
 
