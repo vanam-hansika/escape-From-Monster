@@ -151,7 +151,7 @@ var win_stream: AudioStream
 
 func generate_audio_streams():
 	# Footstep sound (looping)
-	var footstep_s = load("res://foot steps.mp3")
+	var footstep_s = load("res://foot_steps.mp3")
 	if footstep_s:
 		footstep_s.loop = true
 		footstep_player.stream = footstep_s
