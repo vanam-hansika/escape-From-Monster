@@ -31,6 +31,7 @@ var typing_timer: float = 0.0
 var typing_sfx: AudioStreamPlayer
 var confirm_sfx: AudioStreamPlayer
 var prompt_blink_time: float = 0.0
+var time_since_last_sentence: float = 1.0
 
 func _ready():
 	# Configure portraits
@@ -154,11 +155,13 @@ func show_sentence(text_content: String):
 	prompt.visible = false
 	is_typing = true
 	typing_timer = 0.0
+	time_since_last_sentence = 0.0
 	# Start typing sound immediately when typing begins
 	if typing_sfx and typing_sfx.stream:
 		typing_sfx.play(0.0)
 
 func _process(delta):
+	time_since_last_sentence += delta
 	# Dialogue text typing animation
 	if is_typing:
 		typing_timer += delta
@@ -192,6 +195,10 @@ func _input(event):
 	var screen_touch = event is InputEventScreenTouch and event.is_pressed()
 	
 	if enter_or_space or screen_click or screen_touch:
+		# Prevent double-advancement from touch emulation
+		if time_since_last_sentence < 0.15:
+			return
+			
 		# Don't advance if the skip button or enter lab button is being clicked
 		if skip_btn.get_global_rect().has_point(get_viewport().get_mouse_position()) and skip_btn.visible:
 			return
