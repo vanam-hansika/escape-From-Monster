@@ -47,7 +47,7 @@ func _ready():
 		if "loop" in stream:
 			stream.loop = true
 		elif "loop_mode" in stream:
-			stream.loop_mode = AudioStreamWav.LOOP_FORWARD
+			stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
 	typing_sfx.stream = stream
 	typing_sfx.volume_db = -6.0
 	
