@@ -1,6 +1,7 @@
 # Godot-specific ignores
 .godot/
 *.translation
+*.import
 
 # Editor-specific ignores
 .import/
@@ -12,5 +13,3 @@ export_presets.cfg
 .DS_Store
 Thumbs.db
 *.uid
-*.import
-

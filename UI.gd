@@ -29,6 +29,8 @@ func _ready():
 	setup_mobile_controls()
 	call_deferred("find_player")
 
+
+
 var hand_sway_time = 0.0
 
 func _unhandled_input(event):
@@ -173,21 +175,24 @@ func show_lose(is_jumpscare: bool):
 	restart_button.visible = true
 
 func _on_restart_pressed():
+	Main.is_replaying = true
 	get_tree().reload_current_scene()
 
 func _on_joystick_vector_changed(vector: Vector2):
-	if player:
+	if is_instance_valid(player):
 		player.mobile_movement_vector = vector
 
 func _on_look_vector_changed(relative: Vector2):
-	if player and player.can_move:
+	if is_instance_valid(player) and player.can_move:
 		var sensitivity_scale = 0.6
 		player.rotate_y(-relative.x * player.mouse_sensitivity * sensitivity_scale)
-		player.head.rotate_x(-relative.y * player.mouse_sensitivity * sensitivity_scale)
-		player.head.rotation.x = clamp(player.head.rotation.x, deg_to_rad(-80), deg_to_rad(80))
+		if is_instance_valid(player.head):
+			player.head.rotate_x(-relative.y * player.mouse_sensitivity * sensitivity_scale)
+			player.head.rotation.x = clamp(player.head.rotation.x, deg_to_rad(-80), deg_to_rad(80))
 		
 		player.sway_target_rot.y = -relative.x * 0.02
 		player.sway_target_rot.x = -relative.y * 0.02
+
 
 func _on_sprint_button_down():
 	if player:

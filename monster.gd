@@ -66,22 +66,8 @@ func _ready():
 		mesh_inst.material_override = mat
 		add_child(mesh_inst)
 		
-	# Creepy dark trailing particles
-	var particles = CPUParticles3D.new()
-	particles.amount = 40
-	particles.lifetime = 1.5
-	particles.mesh = SphereMesh.new()
-	particles.mesh.radius = 0.1
-	particles.mesh.height = 0.2
-	var pmat = StandardMaterial3D.new()
-	pmat.albedo_color = Color(0, 0, 0, 0.6)
-	pmat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	particles.material_override = pmat
-	particles.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
-	particles.emission_sphere_radius = 1.2
-	particles.gravity = Vector3(0, 1.5, 0)
-	particles.position = Vector3(0, 1.0, 0)
-	add_child(particles)
+	# CPUParticles removed to prevent Android driver GPU buffer crashes
+
 
 func find_player():
 	var players = get_tree().get_nodes_in_group("player")
@@ -138,11 +124,13 @@ func _physics_process(delta):
 			else:
 				ml.light_energy = lerp(ml.light_energy, 5.0, delta * 2.0)
 				
-		var next_path_pos = nav_agent.get_next_path_position()
+		var next_path_pos = global_position
+		if nav_agent and not nav_agent.is_navigation_finished():
+			next_path_pos = nav_agent.get_next_path_position()
 		
 		var new_velocity = Vector3.ZERO
 		var current_pos = global_position
-		if global_position.distance_to(next_path_pos) > 0.1:
+		if is_finite(next_path_pos.x) and is_finite(next_path_pos.y) and is_finite(next_path_pos.z) and global_position.distance_to(next_path_pos) > 0.1:
 			var dir = (next_path_pos - current_pos)
 			dir.y = 0
 			if dir.length() > 0:
@@ -151,6 +139,7 @@ func _physics_process(delta):
 				
 		velocity.x = new_velocity.x
 		velocity.z = new_velocity.z
+
 		
 		# Gravity for monster
 		if not is_on_floor():
@@ -183,8 +172,14 @@ func _physics_process(delta):
 		# Always face the player (manual billboarding) so the 2D image is visible
 		var look_target = player.global_position
 		look_target.y = global_position.y
-		if global_position.distance_to(look_target) > 0.01:
-			look_at(look_target, Vector3.UP)
+		if global_position.distance_to(look_target) > 0.1:
+			var diff = look_target - global_position
+			if abs(diff.x) > 0.001 or abs(diff.z) > 0.001:
+				# Avoid collinear UP vector engine crash
+				var up_vec = Vector3.UP
+				if abs(diff.normalized().dot(up_vec)) < 0.99:
+					look_at(look_target, up_vec)
+
 			
 		# QuadMesh faces +Z by default, but look_at points -Z at the player.
 		# Rotate the mesh 180 degrees so the front of the image faces the player.

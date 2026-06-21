@@ -204,3 +204,32 @@ func disable_movement():
 	can_move = false
 	velocity = Vector3.ZERO
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+func setup_gender(gender: String):
+	var wrist_right = get_node_or_null("CameraHead/Camera3D/HandContainer/WristRight")
+	var fist_right = get_node_or_null("CameraHead/Camera3D/HandContainer/WristRight/FistRight")
+	
+	if wrist_right:
+		var mat = wrist_right.material_override
+		if mat:
+			var dup_mat = mat.duplicate() as StandardMaterial3D
+			wrist_right.material_override = dup_mat
+			if gender == "female":
+				dup_mat.albedo_color = Color(0.85, 0.68, 0.6)
+				wrist_right.scale = Vector3(0.75, 0.75, 0.9)
+			else:
+				dup_mat.albedo_color = Color(0.8, 0.6, 0.5)
+				wrist_right.scale = Vector3(1.0, 1.0, 1.0)
+				
+	if fist_right:
+		var mat = fist_right.material_override
+		if mat:
+			var dup_mat = mat.duplicate() as StandardMaterial3D
+			fist_right.material_override = dup_mat
+			if gender == "female":
+				dup_mat.albedo_color = Color(0.85, 0.68, 0.6)
+				fist_right.scale = Vector3(0.8, 0.8, 0.8)
+			else:
+				dup_mat.albedo_color = Color(0.8, 0.6, 0.5)
+				fist_right.scale = Vector3(1.0, 1.0, 1.0)
+
