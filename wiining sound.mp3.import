@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://c2bppevpygp23"
+path="res://.godot/imported/wiining sound.mp3-b55eee7f3c2c53787b7b2e4bd500b9e6.mp3str"
+
+[deps]
+
+source_file="res://wiining sound.mp3"
+dest_files=["res://.godot/imported/wiining sound.mp3-b55eee7f3c2c53787b7b2e4bd500b9e6.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

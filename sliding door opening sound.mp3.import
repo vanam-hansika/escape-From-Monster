@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://bjw7486rpfdg8"
+path="res://.godot/imported/sliding door opening sound.mp3-42054c9e2b4aaf329fa3cbd65b5fd924.mp3str"
+
+[deps]
+
+source_file="res://sliding door opening sound.mp3"
+dest_files=["res://.godot/imported/sliding door opening sound.mp3-42054c9e2b4aaf329fa3cbd65b5fd924.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

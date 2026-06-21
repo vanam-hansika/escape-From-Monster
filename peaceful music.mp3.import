@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://b7fcpfkx2bw64"
+path="res://.godot/imported/peaceful music.mp3-6d9f020b01942a080ad4a0a90f42b937.mp3str"
+
+[deps]
+
+source_file="res://peaceful music.mp3"
+dest_files=["res://.godot/imported/peaceful music.mp3-6d9f020b01942a080ad4a0a90f42b937.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4
