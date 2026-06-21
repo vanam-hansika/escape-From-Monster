@@ -42,7 +42,7 @@ func _ready():
 	# Setup audio players
 	typing_sfx = AudioStreamPlayer.new()
 	add_child(typing_sfx)
-	typing_sfx.stream = load("res://typing_click.wav")
+	typing_sfx.stream = load("res://typing.mp3")
 	typing_sfx.volume_db = -6.0
 	
 	confirm_sfx = AudioStreamPlayer.new()
@@ -148,6 +148,9 @@ func show_sentence(text_content: String):
 	prompt.visible = false
 	is_typing = true
 	typing_timer = 0.0
+	# Start typing sound immediately when typing begins
+	if typing_sfx and typing_sfx.stream:
+		typing_sfx.play()
 
 func _process(delta):
 	# Dialogue text typing animation
@@ -158,11 +161,6 @@ func _process(delta):
 			current_char_index += 1
 			dialogue_text.text = current_sentence.left(current_char_index)
 			
-			# Play click sound (but space them out slightly or vary pitch)
-			if current_char_index % 2 == 1:
-				typing_sfx.pitch_scale = randf_range(0.9, 1.1)
-				typing_sfx.play()
-				
 			if current_char_index >= current_sentence.length():
 				finish_typing()
 				
@@ -176,6 +174,9 @@ func finish_typing():
 	dialogue_text.text = current_sentence
 	prompt.visible = true
 	prompt_blink_time = 0.0
+	# Stop typing sound when typing finishes
+	if typing_sfx and typing_sfx.playing:
+		typing_sfx.stop()
 
 func _input(event):
 	# Keyboard & mouse click/touch to advance

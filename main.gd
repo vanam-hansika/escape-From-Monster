@@ -270,16 +270,28 @@ func construct_cinematic_world():
 	
 	# 9. Spawning Forest Trees
 	var tree_positions = []
-	for x in range(3):
-		for z in range(6):
-			var z_pos = randf_range(-4.0, 3.0)
-			var x_pos = randf_range(-10.0, 10.0)
-			# Keep a wide path clear so trees don't cut off the edges of the laboratory image
-			if abs(x_pos) < 5.0:
-				if x_pos < 0: x_pos -= 5.0
-				else: x_pos += 5.0
-			tree_positions.append(Vector3(x_pos, 0.0, z_pos))
-				
+	# Left side trees - clearly visible during camera forward movement
+	tree_positions.append(Vector3(-7.0, 0.0, 5.0))
+	tree_positions.append(Vector3(-8.5, 0.0, 2.0))
+	tree_positions.append(Vector3(-6.5, 0.0, -1.0))
+	tree_positions.append(Vector3(-8.0, 0.0, -3.0))
+	tree_positions.append(Vector3(-7.5, 0.0, -5.0))
+	tree_positions.append(Vector3(-6.0, 0.0, -7.0))
+	
+	# Right side trees - clearly visible during camera forward movement
+	tree_positions.append(Vector3(7.0, 0.0, 5.0))
+	tree_positions.append(Vector3(8.5, 0.0, 2.0))
+	tree_positions.append(Vector3(6.5, 0.0, -1.0))
+	tree_positions.append(Vector3(8.0, 0.0, -3.0))
+	tree_positions.append(Vector3(7.5, 0.0, -5.0))
+	tree_positions.append(Vector3(6.0, 0.0, -7.0))
+	
+	# A few closer trees that the camera passes by for depth
+	tree_positions.append(Vector3(-4.5, 0.0, 6.0))
+	tree_positions.append(Vector3(4.5, 0.0, 6.0))
+	tree_positions.append(Vector3(-5.0, 0.0, 3.0))
+	tree_positions.append(Vector3(5.0, 0.0, 3.0))
+			
 	for pos in tree_positions:
 		create_tree(pos)
 
