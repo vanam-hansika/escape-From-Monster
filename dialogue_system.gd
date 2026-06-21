@@ -42,7 +42,13 @@ func _ready():
 	# Setup audio players
 	typing_sfx = AudioStreamPlayer.new()
 	add_child(typing_sfx)
-	typing_sfx.stream = load("res://typing.mp3")
+	var stream = load("res://typing.mp3")
+	if stream:
+		if "loop" in stream:
+			stream.loop = true
+		elif "loop_mode" in stream:
+			stream.loop_mode = AudioStreamWav.LOOP_FORWARD
+	typing_sfx.stream = stream
 	typing_sfx.volume_db = -6.0
 	
 	confirm_sfx = AudioStreamPlayer.new()
@@ -150,7 +156,7 @@ func show_sentence(text_content: String):
 	typing_timer = 0.0
 	# Start typing sound immediately when typing begins
 	if typing_sfx and typing_sfx.stream:
-		typing_sfx.play()
+		typing_sfx.play(0.0)
 
 func _process(delta):
 	# Dialogue text typing animation
@@ -250,3 +256,4 @@ func _on_enter_lab_pressed():
 	enter_lab_btn.visible = false
 	
 	enter_laboratory_pressed.emit()
+	queue_free()
