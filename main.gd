@@ -574,10 +574,10 @@ func start_gameplay():
 	
 	# Enable player movement, turn on flashlight
 	player.can_move = true
-	# Use MOUSE_MODE_HIDDEN so touchpad sliding works without clicking on laptop
+	# Use MOUSE_MODE_CONFINED_HIDDEN so touchpad sliding works without clicking on laptop
 	var _is_mobile = OS.has_feature("android") or OS.has_feature("ios")
 	if not _is_mobile:
-		Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
+		Input.mouse_mode = Input.MOUSE_MODE_CONFINED_HIDDEN
 	
 	player.flashlight.is_on = true
 	player.flashlight.visible = true

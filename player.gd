@@ -42,11 +42,11 @@ func drink_consumable():
 
 func _ready():
 	add_to_group("player")
-	# Use MOUSE_MODE_HIDDEN (not CAPTURED) so touchpad slide works without clicking
+	# Use MOUSE_MODE_CONFINED_HIDDEN (not CAPTURED) so touchpad slide works without clicking
 	# CAPTURED locks the cursor to center; HIDDEN just hides it while still sending motion
 	var _is_mobile = OS.has_feature("android") or OS.has_feature("ios")
 	if not _is_mobile:
-		Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
+		Input.mouse_mode = Input.MOUSE_MODE_CONFINED_HIDDEN
 	
 	if has_node("CameraHead/Camera3D/HandContainer/WristLeft"):
 		$CameraHead/Camera3D/HandContainer/WristLeft.hide()

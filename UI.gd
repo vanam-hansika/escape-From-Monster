@@ -34,17 +34,34 @@ func _ready():
 
 var hand_sway_time = 0.0
 
+# Mobile touch look tracking (handled in _input for reliability)
+var mobile_look_touch_id: int = -1
+
 func _unhandled_input(event):
 	if event.is_action_pressed("ui_cancel") and not win_label.visible and not lose_label.visible:
 		toggle_pause()
 
 func _input(event):
+	# Show mobile controls on first touch
 	if event is InputEventScreenTouch or event is InputEventScreenDrag:
 		if has_node("HUD/MobileControls") and not $HUD/MobileControls/Joystick.visible:
 			$HUD/MobileControls/Joystick.visible = true
 			$HUD/MobileControls/LookPad.visible = true
 			$HUD/MobileControls/SprintButton.text = "SPRINT"
 			$HUD/MobileControls/FlashlightButton.text = "LIGHT"
+	
+	# Mobile camera look: handle directly in _input (most reliable approach)
+	# Tracks right-half drags and routes them to camera rotation
+	if is_mobile and player and player.can_move:
+		var screen_w = get_viewport().get_visible_rect().size.x
+		if event is InputEventScreenTouch:
+			if event.pressed and mobile_look_touch_id == -1 and event.position.x > screen_w * 0.4:
+				mobile_look_touch_id = event.index
+			elif not event.pressed and event.index == mobile_look_touch_id:
+				mobile_look_touch_id = -1
+		elif event is InputEventScreenDrag and event.index == mobile_look_touch_id:
+			_on_look_vector_changed(event.relative)
+			get_viewport().set_input_as_handled()
 
 func toggle_pause():
 	var is_paused = not get_tree().paused
@@ -54,9 +71,10 @@ func toggle_pause():
 	if is_paused:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	else:
-		# On mobile, any cursor capture disables touch input
+		# Confine and hide cursor so it stays inside window and is invisible
+		# CONFINED_HIDDEN works with touchpad slide (no click needed)
 		if not is_mobile:
-			Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
+			Input.mouse_mode = Input.MOUSE_MODE_CONFINED_HIDDEN
 		
 func find_player():
 	var players = get_tree().get_nodes_in_group("player")
@@ -127,7 +145,9 @@ func setup_mobile_controls():
 			# Also un-capture the mouse if they want to click it? No, keep it captured, they just use keyboard.
 			
 		$HUD/MobileControls/Joystick.joystick_vector_changed.connect(_on_joystick_vector_changed)
-		$HUD/MobileControls/LookPad.look_vector_changed.connect(_on_look_vector_changed)
+		# LookPad signal kept for fallback; primary look handled via _input above
+		if $HUD/MobileControls/LookPad.look_vector_changed.connect(_on_look_vector_changed) != OK:
+			pass
 		$HUD/MobileControls/SprintButton.button_down.connect(_on_sprint_button_down)
 		$HUD/MobileControls/SprintButton.button_up.connect(_on_sprint_button_up)
 		$HUD/MobileControls/FlashlightButton.pressed.connect(_on_flashlight_pressed)
@@ -205,10 +225,12 @@ func show_win():
 
 # Called by main.gd when gameplay begins, to reset touch state
 func on_gameplay_started():
+	# Reset look touch tracking so tap-to-start doesn't get stuck as look drag
+	mobile_look_touch_id = -1
+	
 	if is_mobile and has_node("HUD/MobileControls"):
 		var look_pad = $HUD/MobileControls/LookPad
 		var joystick = $HUD/MobileControls/Joystick
-		# Make sure controls are visible
 		look_pad.visible = true
 		joystick.visible = true
 		# Reset any stuck touch state from the objectives screen tap
