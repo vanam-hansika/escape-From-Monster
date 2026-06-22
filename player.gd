@@ -80,21 +80,24 @@ func _ready():
 			event.physical_keycode = keycode
 			InputMap.action_add_event(action, event)
 
-func _unhandled_input(event):
+func _input(event):
 	if not can_move:
 		return
 	
-	# On PC/laptop: any mouse motion (touchpad slide or mouse move) rotates camera
-	# We don't require MOUSE_MODE_CAPTURED so touchpad sliding works without clicking
+	# PC/laptop camera look: handle in _input (fires before GUI) so touchpad
+	# sliding works even when cursor is hovering over a button
 	var _is_mobile = OS.has_feature("android") or OS.has_feature("ios")
 	if not _is_mobile and event is InputEventMouseMotion:
 		rotate_y(-event.relative.x * mouse_sensitivity)
 		head.rotate_x(-event.relative.y * mouse_sensitivity)
 		head.rotation.x = clamp(head.rotation.x, deg_to_rad(-80), deg_to_rad(80))
 		
-		# Hand sway target calculation
 		sway_target_rot.y = clamp(-event.relative.x * 0.08, -0.4, 0.4)
 		sway_target_rot.x = clamp(-event.relative.y * 0.08, -0.4, 0.4)
+		get_viewport().set_input_as_handled()
+
+func _unhandled_input(_event):
+	pass
 
 func _physics_process(delta):
 	if drink_cooldown > 0.0:
