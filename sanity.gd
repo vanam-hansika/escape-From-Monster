@@ -18,7 +18,7 @@ func find_monster():
 		monster = monsters[0]
 
 func update_sanity(delta: float, is_dark: bool):
-	if player.is_safe and not is_dark:
+	if player.is_safe:
 		current_sanity = min(current_sanity + 15.0 * delta, max_sanity)
 		return
 		
