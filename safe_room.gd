@@ -8,7 +8,8 @@ var tween: Tween
 var player = null
 
 func _ready():
-	# SafeZoneTrigger signals removed in favor of robust distance check in _process
+	add_to_group("safe_room")
+	# Physics signals removed for robust distance check in player.gd
 	
 	$DoorTrigger.body_entered.connect(_on_door_trigger_entered)
 	$DoorTrigger.body_exited.connect(_on_door_trigger_exited)
@@ -31,25 +32,7 @@ func _on_door_trigger_exited(body):
 	if body.is_in_group("player"):
 		close_door()
 
-func _process(_delta):
-	if not is_instance_valid(player):
-		var players = get_tree().get_nodes_in_group("player")
-		if players.size() > 0:
-			player = players[0]
-		return
-		
-	# Robust distance check for Safe Zone to prevent missed signals on mobile
-	var dist = player.global_position.distance_to($SafeZoneTrigger.global_position)
-	if dist < 4.0: # Match the rough size of the SafeZoneTrigger BoxShape
-		if not player.is_safe:
-			player.is_safe = true
-			if audio_manager and audio_manager.has_method("set_safe_mode"):
-				audio_manager.set_safe_mode(true)
-	else:
-		if player.is_safe:
-			player.is_safe = false
-			if audio_manager and audio_manager.has_method("set_safe_mode"):
-				audio_manager.set_safe_mode(false)
+
 
 func open_door():
 	if door_open: return

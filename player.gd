@@ -190,6 +190,19 @@ func _physics_process(delta):
 	elif flashlight.is_on:
 		flashlight.light_energy = lerp(flashlight.light_energy, flashlight.default_energy, delta * 5.0)
 
+	# Safe Room Logic
+	var was_safe = is_safe
+	is_safe = false
+	for sr in get_tree().get_nodes_in_group("safe_room"):
+		if global_position.distance_to(sr.global_position) < 4.0:
+			is_safe = true
+			break
+			
+	if is_safe != was_safe:
+		var am = get_tree().current_scene.get_node_or_null("AudioManager")
+		if am and am.has_method("set_safe_mode"):
+			am.set_safe_mode(is_safe)
+
 	# Sanity logic (darkness check)
 	var is_dark = not flashlight.is_on or flashlight.light_energy < flashlight.default_energy * 0.2
 	sanity.update_sanity(delta, is_dark)
