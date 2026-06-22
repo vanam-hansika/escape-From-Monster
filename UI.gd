@@ -11,6 +11,7 @@ extends CanvasLayer
 @onready var pause_menu: ColorRect = $PauseMenu
 
 var player: CharacterBody3D = null
+var is_mobile: bool = false
 
 func _ready():
 	win_label.visible = false
@@ -61,7 +62,7 @@ func find_player():
 		player = players[0]
 
 func setup_mobile_controls():
-	var is_mobile = DisplayServer.is_touchscreen_available() or OS.has_feature("mobile")
+	is_mobile = DisplayServer.is_touchscreen_available() or OS.has_feature("mobile")
 	if OS.is_debug_build():
 		if ProjectSettings.has_setting("input_devices/pointing/emulate_touch_from_mouse"):
 			if ProjectSettings.get_setting("input_devices/pointing/emulate_touch_from_mouse"):
