@@ -6,14 +6,15 @@ var touch_id: int = -1
 var dragging: bool = false
 
 func _ready():
-	mouse_filter = MOUSE_FILTER_STOP
+	# PASS so Sprint/Flashlight buttons behind us still receive input
+	mouse_filter = MOUSE_FILTER_PASS
 
 func _gui_input(event):
 	if event is InputEventScreenTouch:
-		if event.pressed:
+		if event.pressed and not dragging:
 			dragging = true
 			touch_id = event.index
-		elif event.index == touch_id:
+		elif not event.pressed and event.index == touch_id:
 			dragging = false
 			touch_id = -1
 			
