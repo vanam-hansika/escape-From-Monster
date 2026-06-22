@@ -60,7 +60,15 @@ func _input(event):
 			elif not event.pressed and event.index == mobile_look_touch_id:
 				mobile_look_touch_id = -1
 		elif event is InputEventScreenDrag and event.index == mobile_look_touch_id:
-			_on_look_vector_changed(event.relative)
+			# Use higher sensitivity for mobile so full 360° rotation is easy
+			var mobile_sensitivity = 5.0
+			if is_instance_valid(player) and player.can_move:
+				player.rotate_y(-event.relative.x * player.mouse_sensitivity * mobile_sensitivity)
+				if is_instance_valid(player.head):
+					player.head.rotate_x(-event.relative.y * player.mouse_sensitivity * mobile_sensitivity)
+					player.head.rotation.x = clamp(player.head.rotation.x, deg_to_rad(-80), deg_to_rad(80))
+				player.sway_target_rot.y = -event.relative.x * 0.02
+				player.sway_target_rot.x = -event.relative.y * 0.02
 			get_viewport().set_input_as_handled()
 
 func toggle_pause():
