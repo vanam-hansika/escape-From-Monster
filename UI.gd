@@ -70,31 +70,50 @@ func setup_mobile_controls():
 	if has_node("HUD/MobileControls"):
 		$HUD/MobileControls.visible = true
 		
-		# Frosted Glass Aesthetic
-		var glass_style = StyleBoxFlat.new()
-		glass_style.bg_color = Color(0.05, 0.05, 0.08, 0.45)
-		glass_style.corner_radius_top_left = 35
-		glass_style.corner_radius_top_right = 35
-		glass_style.corner_radius_bottom_left = 35
-		glass_style.corner_radius_bottom_right = 35
-		glass_style.border_width_left = 2
-		glass_style.border_width_top = 2
-		glass_style.border_width_right = 2
-		glass_style.border_width_bottom = 2
-		glass_style.border_color = Color(1.0, 1.0, 1.0, 0.15)
-		glass_style.border_blend = true
+		# Frosted Glass Aesthetic (Normal State)
+		var glass_normal = StyleBoxFlat.new()
+		glass_normal.bg_color = Color(0.05, 0.05, 0.08, 0.45)
+		glass_normal.corner_radius_top_left = 35
+		glass_normal.corner_radius_top_right = 35
+		glass_normal.corner_radius_bottom_left = 35
+		glass_normal.corner_radius_bottom_right = 35
+		glass_normal.border_width_left = 2
+		glass_normal.border_width_top = 2
+		glass_normal.border_width_right = 2
+		glass_normal.border_width_bottom = 2
+		glass_normal.border_color = Color(1.0, 1.0, 1.0, 0.15)
+		glass_normal.border_blend = true
 		
-		$HUD/MobileControls/SprintButton.add_theme_stylebox_override("normal", glass_style)
-		$HUD/MobileControls/SprintButton.add_theme_stylebox_override("hover", glass_style)
-		$HUD/MobileControls/SprintButton.add_theme_stylebox_override("pressed", glass_style)
-		$HUD/MobileControls/FlashlightButton.add_theme_stylebox_override("normal", glass_style)
-		$HUD/MobileControls/FlashlightButton.add_theme_stylebox_override("hover", glass_style)
-		$HUD/MobileControls/FlashlightButton.add_theme_stylebox_override("pressed", glass_style)
+		# Hover state StyleBox (Brighter background, glowing border)
+		var glass_hover = glass_normal.duplicate() as StyleBoxFlat
+		glass_hover.bg_color = Color(0.12, 0.12, 0.16, 0.65)
+		glass_hover.border_color = Color(1.0, 1.0, 1.0, 0.6)
 		
+		# Pressed state StyleBox (Red tint for survival feedback)
+		var glass_pressed = glass_normal.duplicate() as StyleBoxFlat
+		glass_pressed.bg_color = Color(0.2, 0.05, 0.05, 0.8)
+		glass_pressed.border_color = Color(0.85, 0.1, 0.1, 0.8)
+		
+		var buttons = [$HUD/MobileControls/SprintButton, $HUD/MobileControls/FlashlightButton]
 		if has_node("HUD/PauseToggleButton"):
-			$HUD/PauseToggleButton.add_theme_stylebox_override("normal", glass_style)
-			$HUD/PauseToggleButton.add_theme_stylebox_override("hover", glass_style)
-			$HUD/PauseToggleButton.add_theme_stylebox_override("pressed", glass_style)
+			buttons.append($HUD/PauseToggleButton)
+			
+		for btn in buttons:
+			btn.add_theme_stylebox_override("normal", glass_normal)
+			btn.add_theme_stylebox_override("hover", glass_hover)
+			btn.add_theme_stylebox_override("pressed", glass_pressed)
+			btn.add_theme_stylebox_override("focus", glass_hover)
+			
+			btn.pivot_offset = btn.custom_minimum_size / 2.0 if btn.custom_minimum_size != Vector2.ZERO else btn.size / 2.0
+			
+			btn.mouse_entered.connect(func():
+				var tween = create_tween().set_parallel(true)
+				tween.tween_property(btn, "scale", Vector2(1.08, 1.08), 0.15).set_trans(Tween.TRANS_QUAD)
+			)
+			btn.mouse_exited.connect(func():
+				var tween = create_tween().set_parallel(true)
+				tween.tween_property(btn, "scale", Vector2(1.0, 1.0), 0.15).set_trans(Tween.TRANS_QUAD)
+			)
 		
 		if not is_mobile:
 			# On PC, hide joysticks but keep the buttons visible as keyboard hints

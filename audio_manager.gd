@@ -165,18 +165,25 @@ func _process(delta):
 func play_door_open():
 	if _door_sound_cooldown > 0.0:
 		return
-	_door_sound_cooldown = 1.5
+	_door_sound_cooldown = 1.0
 	sfx_player.stream = door_open_stream
-	sfx_player.volume_db = 0.0
-	sfx_player.play()
+	sfx_player.volume_db = -3.0
+	sfx_player.play(0.0)
+	
+	# Stop the sound after 1.5 seconds to prevent the closing/repeat part in the file from playing
+	var timer = get_tree().create_timer(1.5)
+	timer.timeout.connect(func():
+		if sfx_player.stream == door_open_stream and sfx_player.playing:
+			sfx_player.stop()
+	)
 
 func play_door_close():
 	if _door_sound_cooldown > 0.0:
 		return
-	_door_sound_cooldown = 1.5
+	_door_sound_cooldown = 1.0
 	sfx_player.stream = door_close_stream
-	sfx_player.volume_db = 0.0
-	sfx_player.play()
+	sfx_player.volume_db = -3.0
+	sfx_player.play(2.0) # Start from 2.0s (midpoint of the 4-second audio file) for the close sound
 
 func play_drink():
 	sfx_player.stream = drink_stream
