@@ -42,7 +42,7 @@ func _input(event):
 	if event is InputEventScreenTouch or event is InputEventScreenDrag:
 		if has_node("HUD/MobileControls") and not $HUD/MobileControls/Joystick.visible:
 			$HUD/MobileControls/Joystick.visible = true
-			# LookPad not shown - touch look handled directly in player.gd
+			$HUD/MobileControls/LookPad.visible = true
 			$HUD/MobileControls/SprintButton.text = "SPRINT"
 			$HUD/MobileControls/FlashlightButton.text = "LIGHT"
 
@@ -127,8 +127,7 @@ func setup_mobile_controls():
 			# Also un-capture the mouse if they want to click it? No, keep it captured, they just use keyboard.
 			
 		$HUD/MobileControls/Joystick.joystick_vector_changed.connect(_on_joystick_vector_changed)
-		# LookPad is no longer used - touch look is handled directly in player.gd _input
-		$HUD/MobileControls/LookPad.visible = false
+		$HUD/MobileControls/LookPad.look_vector_changed.connect(_on_look_vector_changed)
 		$HUD/MobileControls/SprintButton.button_down.connect(_on_sprint_button_down)
 		$HUD/MobileControls/SprintButton.button_up.connect(_on_sprint_button_up)
 		$HUD/MobileControls/FlashlightButton.pressed.connect(_on_flashlight_pressed)

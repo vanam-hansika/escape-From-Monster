@@ -27,10 +27,6 @@ var mobile_sprint_active: bool = false
 var is_safe: bool = false
 var drink_cooldown: float = 0.0
 
-# Direct touch look (bypasses GUI LookPad for reliability)
-var mobile_look_touch_id: int = -1
-var mobile_look_active: bool = false
-
 func can_drink() -> bool:
 	return drink_cooldown <= 0.0
 
@@ -95,35 +91,6 @@ func _unhandled_input(event):
 		# Hand sway target calculation (more noticeable and smooth)
 		sway_target_rot.y = clamp(-event.relative.x * 0.08, -0.4, 0.4)
 		sway_target_rot.x = clamp(-event.relative.y * 0.08, -0.4, 0.4)
-
-func _input(event):
-	# Direct mobile touch look - right half of screen controls camera
-	# This bypasses the GUI LookPad which is unreliable after scene transitions
-	if not can_move:
-		return
-	var _is_mobile = OS.has_feature("android") or OS.has_feature("ios")
-	if not _is_mobile:
-		return
-	
-	var screen_size = get_viewport().get_visible_rect().size
-	var half_x = screen_size.x * 0.4  # Left 40% = joystick area, right 60% = look area
-	
-	if event is InputEventScreenTouch:
-		if event.pressed and event.position.x > half_x and not mobile_look_active:
-			mobile_look_touch_id = event.index
-			mobile_look_active = true
-		elif not event.pressed and event.index == mobile_look_touch_id:
-			mobile_look_active = false
-			mobile_look_touch_id = -1
-	
-	elif event is InputEventScreenDrag and mobile_look_active and event.index == mobile_look_touch_id:
-		var sensitivity_scale = 0.6
-		rotate_y(-event.relative.x * mouse_sensitivity * sensitivity_scale)
-		head.rotate_x(-event.relative.y * mouse_sensitivity * sensitivity_scale)
-		head.rotation.x = clamp(head.rotation.x, deg_to_rad(-80), deg_to_rad(80))
-		
-		sway_target_rot.y = -event.relative.x * 0.02
-		sway_target_rot.x = -event.relative.y * 0.02
 
 func _physics_process(delta):
 	if drink_cooldown > 0.0:
