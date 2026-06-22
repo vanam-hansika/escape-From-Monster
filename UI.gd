@@ -53,22 +53,24 @@ func _input(event):
 	# Mobile camera look: handle directly in _input (most reliable approach)
 	# Tracks right-half drags and routes them to camera rotation
 	if is_mobile and player and player.can_move:
-		var screen_w = get_viewport().get_visible_rect().size.x
+		var vp_size = get_viewport().get_visible_rect().size
+		var screen_w = vp_size.x
+		var screen_h = vp_size.y
 		if event is InputEventScreenTouch:
 			if event.pressed and mobile_look_touch_id == -1 and event.position.x > screen_w * 0.4:
 				mobile_look_touch_id = event.index
 			elif not event.pressed and event.index == mobile_look_touch_id:
 				mobile_look_touch_id = -1
 		elif event is InputEventScreenDrag and event.index == mobile_look_touch_id:
-			# Use higher sensitivity for mobile so full 360° rotation is easy
-			var mobile_sensitivity = 5.0
 			if is_instance_valid(player) and player.can_move:
-				player.rotate_y(-event.relative.x * player.mouse_sensitivity * mobile_sensitivity)
+				# Normalize: dragging full look-area width (60% of screen) = 360° horizontal
+				# Normalize: dragging full screen height = 160° vertical
+				var h_rot = -(event.relative.x / (screen_w * 0.6)) * TAU
+				var v_rot = -(event.relative.y / screen_h) * deg_to_rad(160.0)
+				player.rotate_y(h_rot)
 				if is_instance_valid(player.head):
-					player.head.rotate_x(-event.relative.y * player.mouse_sensitivity * mobile_sensitivity)
+					player.head.rotate_x(v_rot)
 					player.head.rotation.x = clamp(player.head.rotation.x, deg_to_rad(-80), deg_to_rad(80))
-				player.sway_target_rot.y = -event.relative.x * 0.02
-				player.sway_target_rot.x = -event.relative.y * 0.02
 			get_viewport().set_input_as_handled()
 
 func toggle_pause():
