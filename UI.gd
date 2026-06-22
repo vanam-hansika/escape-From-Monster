@@ -84,7 +84,7 @@ func toggle_pause():
 		# Confine and hide cursor so it stays inside window and is invisible
 		# CONFINED_HIDDEN works with touchpad slide (no click needed)
 		if not is_mobile:
-			Input.mouse_mode = Input.MOUSE_MODE_CONFINED_HIDDEN
+			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		
 func find_player():
 	var players = get_tree().get_nodes_in_group("player")
