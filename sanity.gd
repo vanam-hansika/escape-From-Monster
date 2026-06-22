@@ -2,7 +2,7 @@ extends Node
 
 @export var max_sanity: float = 100.0
 @export var current_sanity: float = 100.0
-@export var dark_decay_rate: float = 1.5
+@export var dark_decay_rate: float = 3.0
 @export var light_decay_rate: float = 0.2
 @export var monster_near_decay_rate: float = 12.0
 
