@@ -575,7 +575,7 @@ func start_gameplay():
 	# Enable player movement, turn on flashlight
 	player.can_move = true
 	# On mobile, MOUSE_MODE_CAPTURED disables all touch input - only capture on PC
-	var _is_mobile = DisplayServer.is_touchscreen_available() or OS.has_feature("mobile")
+	var _is_mobile = OS.has_feature("android") or OS.has_feature("ios")
 	if not _is_mobile:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	
