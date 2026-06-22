@@ -42,7 +42,10 @@ func drink_consumable():
 
 func _ready():
 	add_to_group("player")
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	# On mobile, MOUSE_MODE_CAPTURED blocks all touch input - keep visible
+	var _is_mobile = DisplayServer.is_touchscreen_available() or OS.has_feature("mobile")
+	if not _is_mobile:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	
 	if has_node("CameraHead/Camera3D/HandContainer/WristLeft"):
 		$CameraHead/Camera3D/HandContainer/WristLeft.hide()
