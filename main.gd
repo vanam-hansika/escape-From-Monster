@@ -526,7 +526,8 @@ func show_objectives():
 		"• Find the Exit",
 		"• Avoid the Monster",
 		"• Use Safe Rooms to Survive",
-		"• Manage Your Stamina Carefully"
+		"• Manage Your Stamina Carefully",
+		"• Drink stamina booster in safe room"
 	]
 	
 	for obj in objectives:
