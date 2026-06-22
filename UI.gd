@@ -181,23 +181,22 @@ func _process(delta):
 	_update_bar_color(battery_bar)
 
 	if not is_mobile:
+		var sprint_btn = $HUD/MobileControls/SprintButton
+		var flash_btn = $HUD/MobileControls/FlashlightButton
+		
 		if Input.is_action_just_pressed("sprint"):
-			var tween = create_tween().set_parallel(true)
-			tween.tween_property($HUD/MobileControls/SprintButton, "scale", Vector2(1.08, 1.08), 0.15).set_trans(Tween.TRANS_QUAD)
-			$HUD/MobileControls/SprintButton.modulate = Color(1.5, 0.5, 0.5)
+			var tw = create_tween()
+			tw.tween_property(sprint_btn, "modulate", Color(0.4, 1.2, 0.4), 0.08)
 		elif Input.is_action_just_released("sprint"):
-			var tween = create_tween().set_parallel(true)
-			tween.tween_property($HUD/MobileControls/SprintButton, "scale", Vector2(1.0, 1.0), 0.15).set_trans(Tween.TRANS_QUAD)
-			$HUD/MobileControls/SprintButton.modulate = Color(1, 1, 1)
+			var tw = create_tween()
+			tw.tween_property(sprint_btn, "modulate", Color(1, 1, 1), 0.2)
 
 		if Input.is_action_just_pressed("toggle_flashlight"):
-			var tween = create_tween().set_parallel(true)
-			tween.tween_property($HUD/MobileControls/FlashlightButton, "scale", Vector2(1.08, 1.08), 0.1).set_trans(Tween.TRANS_QUAD)
-			$HUD/MobileControls/FlashlightButton.modulate = Color(1.5, 0.5, 0.5)
+			var tw = create_tween()
+			tw.tween_property(flash_btn, "modulate", Color(1.4, 1.4, 0.2), 0.08)
 		elif Input.is_action_just_released("toggle_flashlight"):
-			var tween = create_tween().set_parallel(true)
-			tween.tween_property($HUD/MobileControls/FlashlightButton, "scale", Vector2(1.0, 1.0), 0.15).set_trans(Tween.TRANS_QUAD)
-			$HUD/MobileControls/FlashlightButton.modulate = Color(1, 1, 1)
+			var tw = create_tween()
+			tw.tween_property(flash_btn, "modulate", Color(1, 1, 1), 0.2)
 
 func _update_bar_color(bar: ProgressBar):
 	if not bar.has_theme_stylebox_override("fill"):
