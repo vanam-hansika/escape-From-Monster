@@ -585,6 +585,10 @@ func start_gameplay():
 	# Show gameplay HUD
 	ui.get_node("HUD").visible = true
 	
+	# Reset mobile controls state (clears any stuck touch from objectives tap)
+	if ui.has_method("on_gameplay_started"):
+		ui.on_gameplay_started()
+	
 	# Start monster physics and movement
 	if monster:
 		monster.set_physics_process(true)

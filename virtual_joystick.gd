@@ -11,6 +11,7 @@ var touch_id: int = -1
 
 func _ready():
 	custom_minimum_size = Vector2(200, 200)
+	mouse_filter = MOUSE_FILTER_STOP
 	queue_redraw()
 
 func _draw():
@@ -23,17 +24,17 @@ func _draw():
 
 func _gui_input(event):
 	if event is InputEventScreenTouch:
-		if event.pressed:
+		if event.pressed and not dragging:
 			dragging = true
 			touch_id = event.index
 			update_joystick(event.position - size / 2.0)
-		elif event.index == touch_id:
+		elif not event.pressed and event.index == touch_id:
 			dragging = false
 			touch_id = -1
 			drag_position = Vector2.ZERO
 			joystick_vector_changed.emit(Vector2.ZERO)
 			queue_redraw()
-			
+		
 	elif event is InputEventScreenDrag and dragging and event.index == touch_id:
 		update_joystick(event.position - size / 2.0)
 
@@ -48,4 +49,12 @@ func update_joystick(local_pos: Vector2):
 		output_vector = Vector2.ZERO
 		
 	joystick_vector_changed.emit(output_vector)
+	queue_redraw()
+
+# Reset state (called when returning to gameplay from objectives screen)
+func reset():
+	dragging = false
+	touch_id = -1
+	drag_position = Vector2.ZERO
+	joystick_vector_changed.emit(Vector2.ZERO)
 	queue_redraw()

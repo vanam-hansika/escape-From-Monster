@@ -203,6 +203,21 @@ func show_win():
 	if has_node("HUD/MobileControls"):
 		$HUD/MobileControls.visible = false
 
+# Called by main.gd when gameplay begins, to reset touch state
+func on_gameplay_started():
+	if is_mobile and has_node("HUD/MobileControls"):
+		var look_pad = $HUD/MobileControls/LookPad
+		var joystick = $HUD/MobileControls/Joystick
+		# Make sure controls are visible
+		look_pad.visible = true
+		joystick.visible = true
+		# Reset any stuck touch state from the objectives screen tap
+		look_pad.dragging = false
+		look_pad.touch_id = -1
+		if joystick.has_method("reset"):
+			joystick.reset()
+
+
 func show_lose(is_jumpscare: bool):
 	if has_node("HUD/MobileControls"):
 		$HUD/MobileControls.visible = false
