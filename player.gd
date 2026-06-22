@@ -42,10 +42,11 @@ func drink_consumable():
 
 func _ready():
 	add_to_group("player")
-	# On mobile, MOUSE_MODE_CAPTURED blocks all touch input - keep visible
+	# Use MOUSE_MODE_HIDDEN (not CAPTURED) so touchpad slide works without clicking
+	# CAPTURED locks the cursor to center; HIDDEN just hides it while still sending motion
 	var _is_mobile = OS.has_feature("android") or OS.has_feature("ios")
 	if not _is_mobile:
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
 	
 	if has_node("CameraHead/Camera3D/HandContainer/WristLeft"):
 		$CameraHead/Camera3D/HandContainer/WristLeft.hide()
@@ -82,13 +83,16 @@ func _ready():
 func _unhandled_input(event):
 	if not can_move:
 		return
-		
-	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+	
+	# On PC/laptop: any mouse motion (touchpad slide or mouse move) rotates camera
+	# We don't require MOUSE_MODE_CAPTURED so touchpad sliding works without clicking
+	var _is_mobile = OS.has_feature("android") or OS.has_feature("ios")
+	if not _is_mobile and event is InputEventMouseMotion:
 		rotate_y(-event.relative.x * mouse_sensitivity)
 		head.rotate_x(-event.relative.y * mouse_sensitivity)
 		head.rotation.x = clamp(head.rotation.x, deg_to_rad(-80), deg_to_rad(80))
 		
-		# Hand sway target calculation (more noticeable and smooth)
+		# Hand sway target calculation
 		sway_target_rot.y = clamp(-event.relative.x * 0.08, -0.4, 0.4)
 		sway_target_rot.x = clamp(-event.relative.y * 0.08, -0.4, 0.4)
 

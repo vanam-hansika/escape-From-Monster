@@ -54,9 +54,9 @@ func toggle_pause():
 	if is_paused:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	else:
-		# On mobile, MOUSE_MODE_CAPTURED disables all touch input
+		# On mobile, any cursor capture disables touch input
 		if not is_mobile:
-			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+			Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
 		
 func find_player():
 	var players = get_tree().get_nodes_in_group("player")
