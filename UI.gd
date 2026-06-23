@@ -50,9 +50,9 @@ func _input(event):
 			$HUD/MobileControls/SprintButton.text = "SPRINT"
 			$HUD/MobileControls/FlashlightButton.text = "LIGHT"
 	
-	# Mobile camera look: handle directly in _input (most reliable approach)
+	# Mobile camera look: always handle screen drags (works in debug AND release builds)
 	# Tracks right-half drags and routes them to camera rotation
-	if is_mobile and player and player.can_move:
+	if player and player.can_move:
 		var vp_size = get_viewport().get_visible_rect().size
 		var screen_w = vp_size.x
 		var screen_h = vp_size.y
@@ -92,7 +92,8 @@ func find_player():
 		player = players[0]
 
 func setup_mobile_controls():
-	is_mobile = OS.has_feature("android") or OS.has_feature("ios")
+	# Use touchscreen detection as primary check - works in BOTH debug and release builds
+	is_mobile = OS.has_feature("android") or OS.has_feature("ios") or DisplayServer.is_touchscreen_available()
 	if OS.is_debug_build():
 		if ProjectSettings.has_setting("input_devices/pointing/emulate_touch_from_mouse"):
 			if ProjectSettings.get_setting("input_devices/pointing/emulate_touch_from_mouse"):
