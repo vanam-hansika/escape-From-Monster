@@ -43,9 +43,7 @@ var lightning_light: DirectionalLight3D
 var lamp_light: SpotLight3D
 var lightning_cooldown = 0.0
 var fade_materials = []
-var showing_objectives = false
-var objective_canvas = null
-var objective_show_time = 0.0
+
 var sign_mat: StandardMaterial3D
 var window_material: StandardMaterial3D
 
@@ -402,36 +400,7 @@ func _process(delta):
 				lightning_cooldown -= delta
 				lightning_light.light_energy = lerp(lightning_light.light_energy, 0.0, delta * 8.0)
 
-	if showing_objectives:
-		objective_show_time += delta
 
-func _input(event):
-	if showing_objectives:
-		var key_press = event is InputEventKey and event.is_pressed() and not event.is_echo()
-		var enter_pressed = key_press and (event.keycode == KEY_ENTER or event.keycode == KEY_KP_ENTER)
-		var screen_click = event is InputEventMouseButton and event.is_pressed() and event.button_index == MOUSE_BUTTON_LEFT
-		var screen_touch = event is InputEventScreenTouch and event.is_pressed()
-		
-		if enter_pressed or screen_click or screen_touch:
-			if objective_show_time > 0.4:
-				proceed_to_gameplay()
-
-func proceed_to_gameplay():
-	if not objective_canvas:
-		return
-	showing_objectives = false
-	
-	var fade_out = create_tween()
-	var root_control = objective_canvas.get_child(0)
-	fade_out.tween_property(root_control, "modulate:a", 0.0, 0.5)
-	await fade_out.finished
-	
-	if objective_canvas:
-		objective_canvas.queue_free()
-		objective_canvas = null
-	
-	# Start gameplay
-	start_gameplay()
 
 func _on_enter_laboratory_pressed():
 	# Stop wolf sound if playing
@@ -490,10 +459,6 @@ func show_objectives():
 	canvas.layer = 101
 	add_child(canvas)
 	
-	showing_objectives = true
-	objective_canvas = canvas
-	objective_show_time = 0.0
-	
 	# Root control node to allow modulation/fading
 	var root_control = Control.new()
 	root_control.anchors_preset = Control.PRESET_FULL_RECT
@@ -537,30 +502,25 @@ func show_objectives():
 		lbl.add_theme_font_size_override("font_size", 20)
 		vbox.add_child(lbl)
 		
-	var spacer2 = Control.new()
-	spacer2.custom_minimum_size = Vector2(0, 30)
-	vbox.add_child(spacer2)
-	
-	var prompt = Label.new()
-	prompt.text = "Press Enter or Tap anywhere to explore"
-	prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	prompt.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6, 1.0))
-	prompt.add_theme_font_size_override("font_size", 18)
-	vbox.add_child(prompt)
-	
 	# Recenter box size
-	vbox.size = Vector2(500, 350)
+	vbox.size = Vector2(500, 300)
 	vbox.position = (get_viewport().get_visible_rect().size - vbox.size) / 2.0
 	
-	# Make prompt blink
-	var blink_tween = create_tween().set_loops()
-	blink_tween.tween_property(prompt, "modulate:a", 0.3, 0.6).set_trans(Tween.TRANS_SINE)
-	blink_tween.tween_property(prompt, "modulate:a", 1.0, 0.6).set_trans(Tween.TRANS_SINE)
-	
-	# Animate fade in
+	# Animate fade in, hold, fade out
 	root_control.modulate.a = 0.0
 	var fade_in = create_tween()
 	fade_in.tween_property(root_control, "modulate:a", 1.0, 0.5)
+	
+	await get_tree().create_timer(3.0).timeout
+	
+	var fade_out = create_tween()
+	fade_out.tween_property(root_control, "modulate:a", 0.0, 0.5)
+	await fade_out.finished
+	
+	canvas.queue_free()
+	
+	# Start gameplay
+	start_gameplay()
 
 func start_gameplay():
 	game_started = true
@@ -586,6 +546,8 @@ func start_gameplay():
 	ui.get_node("HUD").visible = true
 	
 	# Reset mobile controls state (clears any stuck touch from objectives tap)
+	if ui.has_method("setup_mobile_controls"):
+		ui.setup_mobile_controls()
 	if ui.has_method("on_gameplay_started"):
 		ui.on_gameplay_started()
 	
