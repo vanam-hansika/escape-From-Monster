@@ -12,7 +12,6 @@ extends CanvasLayer
 
 var player: CharacterBody3D = null
 var is_mobile: bool = false
-var debug_label: Label = null  # kept as null; debug overlay disabled
 
 func _ready():
 	win_label.visible = false
@@ -21,8 +20,6 @@ func _ready():
 	jumpscare_panel.visible = false
 	pause_menu.visible = false
 	battery_bar.visible = false
-	
-	# Debug overlay disabled (was used for mobile troubleshooting)
 	
 	restart_button.pressed.connect(_on_restart_pressed)
 	$PauseMenu/ResumeButton.pressed.connect(toggle_pause)
@@ -45,10 +42,8 @@ func _unhandled_input(event):
 		toggle_pause()
 
 func _input(event):
-	# Show mobile controls on first touch (debug)
+	# Ensure mobile controls become visible on first touch
 	if event is InputEventScreenTouch or event is InputEventScreenDrag:
-		if event is InputEventScreenTouch:
-			debug_log("DEBUG: Touch Event: idx=%d pressed=%s pos=%s" % [event.index, event.pressed, event.position])
 		if has_node("HUD/MobileControls") and not $HUD/MobileControls/Joystick.visible:
 			$HUD/MobileControls/Joystick.visible = true
 			$HUD/MobileControls/LookPad.visible = true
@@ -217,12 +212,8 @@ func show_win():
 
 # Called by main.gd when gameplay begins, to reset touch state
 func on_gameplay_started():
-	debug_log("DEBUG: on_gameplay_started called. is_mobile = %s, player = %s, player.can_move = %s" % [is_mobile, player != null, player.can_move if player else "null"])
 	# Reset look touch tracking so tap-to-start doesn't get stuck as look drag
 	mobile_look_touch_id = -1
-
-	# debug_log("DEBUG: Active control nodes:")
-	# print_control_nodes(get_tree().root)
 
 	if is_mobile and has_node("HUD/MobileControls"):
 		$HUD/MobileControls.visible = true
@@ -236,11 +227,7 @@ func on_gameplay_started():
 		if joystick.has_method("reset"):
 			joystick.reset()
 
-func print_control_nodes(node: Node):
-	if node is Control:
-		debug_log("DEBUG: Control: %s | visible: %s | filter: %d" % [node.get_path(), node.is_visible_in_tree(), node.mouse_filter])
-	for child in node.get_children():
-		print_control_nodes(child)
+
 
 
 func show_lose(is_jumpscare: bool):
@@ -286,11 +273,3 @@ func _on_sprint_button_up():
 func _on_flashlight_pressed():
 	if player and player.flashlight:
 		player.flashlight.toggle()
-
-func debug_log(msg: String):
-	print(msg)
-	if is_instance_valid(debug_label):
-		var lines = debug_label.text.split("\n")
-		if lines.size() > 15:
-			lines = lines.slice(lines.size() - 15)
-		debug_label.text = "\n".join(lines) + "\n" + msg
