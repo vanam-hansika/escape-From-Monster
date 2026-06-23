@@ -12,7 +12,7 @@ extends CanvasLayer
 
 var player: CharacterBody3D = null
 var is_mobile: bool = false
-var debug_label: Label = null
+var debug_label: Label = null  # kept as null; debug overlay disabled
 
 func _ready():
 	win_label.visible = false
@@ -22,24 +22,7 @@ func _ready():
 	pause_menu.visible = false
 	battery_bar.visible = false
 	
-	# Add debug label to screen for mobile troubleshooting
-	debug_label = Label.new()
-	debug_label.name = "DebugLabel"
-	debug_label.anchor_left = 0.05
-	debug_label.anchor_top = 0.05
-	debug_label.anchor_right = 0.95
-	debug_label.anchor_bottom = 0.35
-	debug_label.offset_left = 0
-	debug_label.offset_top = 0
-	debug_label.offset_right = 0
-	debug_label.offset_bottom = 0
-	debug_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	debug_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	debug_label.add_theme_font_size_override("font_size", 12)
-	debug_label.add_theme_color_override("font_color", Color(1, 1, 0)) # bright yellow
-	add_child(debug_label)
-	
-	debug_log("DEBUG: UI ready")
+	# Debug overlay disabled (was used for mobile troubleshooting)
 	
 	restart_button.pressed.connect(_on_restart_pressed)
 	$PauseMenu/ResumeButton.pressed.connect(toggle_pause)
@@ -238,8 +221,8 @@ func on_gameplay_started():
 	# Reset look touch tracking so tap-to-start doesn't get stuck as look drag
 	mobile_look_touch_id = -1
 
-	debug_log("DEBUG: Active control nodes:")
-	print_control_nodes(get_tree().root)
+	# debug_log("DEBUG: Active control nodes:")
+	# print_control_nodes(get_tree().root)
 
 	if is_mobile and has_node("HUD/MobileControls"):
 		$HUD/MobileControls.visible = true
